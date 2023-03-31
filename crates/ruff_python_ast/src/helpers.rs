@@ -614,12 +614,21 @@ pub fn has_comments<T>(located: &Located<T>, locator: &Locator) -> bool {
     let start = if match_leading_content(located, locator) {
         located.location
     } else {
-        Location::new(located.location.row(), 0)
+        Location::zero()
     };
+
     let end = if match_trailing_content(located, locator) {
         located.end_location.unwrap()
     } else {
-        Location::new(located.end_location.unwrap().row() + 1, 0)
+        let end_offset = Location::try_from(
+            locator.contents()[usize::from(located.end_location.unwrap())..]
+                .lines()
+                .next()
+                .unwrap()
+                .len(),
+        )
+        .unwrap();
+        located.end_location.unwrap() + end_offset
     };
     has_comments_in(Range::new(start, end), locator)
 }
@@ -854,18 +863,13 @@ pub fn to_relative(absolute: Location, base: Location) -> Location {
 
 /// Return `true` if a [`Located`] has leading content.
 pub fn match_leading_content<T>(located: &Located<T>, locator: &Locator) -> bool {
-    let range = Range::new(Location::new(located.location.row(), 0), located.location);
-    let prefix = locator.slice(range);
+    let prefix = &locator.contents()[..located.location];
     prefix.chars().any(|char| !char.is_whitespace())
 }
 
 /// Return `true` if a [`Located`] has trailing content.
 pub fn match_trailing_content<T>(located: &Located<T>, locator: &Locator) -> bool {
-    let range = Range::new(
-        located.end_location.unwrap(),
-        Location::new(located.end_location.unwrap().row() + 1, 0),
-    );
-    let suffix = locator.slice(range);
+    let suffix = &locator.contents()[located.end_location..];
     for char in suffix.chars() {
         if char == '#' {
             return false;

@@ -1064,15 +1064,15 @@ dependencies = [
 
 [[package]]
 name = "lalrpop"
-version = "0.19.8"
+version = "0.19.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b30455341b0e18f276fa64540aff54deafb54c589de6aca68659c63dd2d5d823"
+checksum = "f34313ec00c2eb5c3c87ca6732ea02dcf3af99c3ff7a8fb622ffb99c9d860a87"
 dependencies = [
  "ascii-canvas",
- "atty",
  "bit-set",
  "diff",
  "ena",
+ "is-terminal",
  "itertools",
  "lalrpop-util",
  "petgraph",
@@ -1087,9 +1087,9 @@ dependencies = [
 
 [[package]]
 name = "lalrpop-util"
-version = "0.19.8"
+version = "0.19.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcf796c978e9b4d983414f4caedc9273aa33ee214c5b887bd55fde84c85d2dc4"
+checksum = "e5c1f7869c94d214466c5fd432dfed12c379fd87786768d36455892d46b18edd"
 dependencies = [
  "regex",
 ]
@@ -1948,7 +1948,7 @@ dependencies = [
  "criterion",
  "mimalloc",
  "once_cell",
- "ruff",
+ "rustpython-parser",
  "serde",
  "serde_json",
  "tikv-jemallocator",
@@ -2231,7 +2231,6 @@ dependencies = [
 [[package]]
 name = "rustpython-ast"
 version = "0.2.0"
-source = "git+https://github.com/RustPython/RustPython.git?rev=c15f670f2c30cfae6b41a1874893590148c74bc4#c15f670f2c30cfae6b41a1874893590148c74bc4"
 dependencies = [
  "num-bigint",
  "rustpython-compiler-core",
@@ -2240,10 +2239,10 @@ dependencies = [
 [[package]]
 name = "rustpython-common"
 version = "0.2.0"
-source = "git+https://github.com/RustPython/RustPython.git?rev=c15f670f2c30cfae6b41a1874893590148c74bc4#c15f670f2c30cfae6b41a1874893590148c74bc4"
 dependencies = [
  "ascii",
  "bitflags",
+ "bstr 0.2.17",
  "cfg-if",
  "hexf-parse",
  "itertools",
@@ -2265,7 +2264,6 @@ dependencies = [
 [[package]]
 name = "rustpython-compiler-core"
 version = "0.2.0"
-source = "git+https://github.com/RustPython/RustPython.git?rev=c15f670f2c30cfae6b41a1874893590148c74bc4#c15f670f2c30cfae6b41a1874893590148c74bc4"
 dependencies = [
  "bitflags",
  "bstr 0.2.17",
@@ -2279,7 +2277,6 @@ dependencies = [
 [[package]]
 name = "rustpython-parser"
 version = "0.2.0"
-source = "git+https://github.com/RustPython/RustPython.git?rev=c15f670f2c30cfae6b41a1874893590148c74bc4#c15f670f2c30cfae6b41a1874893590148c74bc4"
 dependencies = [
  "ahash",
  "anyhow",
