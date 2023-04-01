@@ -67,7 +67,7 @@ pub fn getattr_with_constant(checker: &mut Checker, expr: &Expr, func: &Expr, ar
         diagnostic.set_fix(Edit::replacement(
             unparse_expr(&attribute(obj, value), checker.stylist),
             expr.location,
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);

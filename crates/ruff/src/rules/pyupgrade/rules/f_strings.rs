@@ -241,7 +241,7 @@ pub(crate) fn f_strings(checker: &mut Checker, summary: &FormatSummary, expr: &E
     }
 
     // Avoid refactoring multi-line strings.
-    if expr.location.row() != expr.end_location.unwrap().row() {
+    if expr.location.row() != expr.end().row() {
         return;
     }
 
@@ -262,7 +262,7 @@ pub(crate) fn f_strings(checker: &mut Checker, summary: &FormatSummary, expr: &E
     if expr.location.column() > 0 {
         let existing = checker.locator.slice(Range::new(
             Location::new(expr.location.row(), expr.location.column() - 1),
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
         if existing.chars().next().unwrap().is_ascii_alphabetic() {
             contents.insert(0, ' ');
@@ -271,11 +271,7 @@ pub(crate) fn f_strings(checker: &mut Checker, summary: &FormatSummary, expr: &E
 
     let mut diagnostic = Diagnostic::new(FString, Range::from(expr));
     if checker.patch(diagnostic.kind.rule()) {
-        diagnostic.set_fix(Edit::replacement(
-            contents,
-            expr.location,
-            expr.end_location.unwrap(),
-        ));
+        diagnostic.set_fix(Edit::replacement(contents, expr.location, expr.end()));
     };
     checker.diagnostics.push(diagnostic);
 }

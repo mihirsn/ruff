@@ -105,7 +105,7 @@ fn duplicate_handler_exceptions<'a>(
                         unparse_expr(&type_pattern(unique_elts), checker.stylist)
                     },
                     expr.location,
-                    expr.end_location.unwrap(),
+                    expr.end(),
                 ));
             }
             checker.diagnostics.push(diagnostic);

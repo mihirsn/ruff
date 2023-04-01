@@ -185,10 +185,7 @@ pub fn no_unnecessary_pass(checker: &mut Checker, body: &[Stmt]) {
                     if let Some(index) = match_trailing_comment(pass_stmt, checker.locator) {
                         diagnostic.set_fix(Edit::deletion(
                             pass_stmt.location,
-                            Location::new(
-                                pass_stmt.end_location.unwrap().row(),
-                                pass_stmt.end_location.unwrap().column() + index,
-                            ),
+                            Location::new(pass_stmt.end().row(), pass_stmt.end().column() + index),
                         ));
                     } else {
                         diagnostic.try_set_fix(|| {
@@ -505,7 +502,7 @@ pub fn multiple_starts_ends_with(checker: &mut Checker, expr: &Expr) {
                 diagnostic.set_fix(Edit::replacement(
                     unparse_expr(&bool_op, checker.stylist),
                     expr.location,
-                    expr.end_location.unwrap(),
+                    expr.end(),
                 ));
             }
             checker.diagnostics.push(diagnostic);
@@ -531,7 +528,7 @@ pub fn reimplemented_list_builtin(checker: &mut Checker, expr: &Expr) {
                     diagnostic.set_fix(Edit::replacement(
                         "list".to_string(),
                         expr.location,
-                        expr.end_location.unwrap(),
+                        expr.end(),
                     ));
                 }
                 checker.diagnostics.push(diagnostic);

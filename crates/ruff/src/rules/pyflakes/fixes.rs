@@ -43,7 +43,7 @@ pub fn remove_unused_format_arguments_from_dict(
     Ok(Edit::replacement(
         state.to_string(),
         stmt.location,
-        stmt.end_location.unwrap(),
+        stmt.end(),
     ))
 }
 

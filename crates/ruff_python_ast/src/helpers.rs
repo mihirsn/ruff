@@ -4,6 +4,7 @@ use itertools::Itertools;
 use log::error;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use ruff_text_size::{TextLen, TextSize};
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustpython_parser::ast::{
     Arguments, Cmpop, Constant, Excepthandler, ExcepthandlerKind, Expr, ExprKind, Keyword,
@@ -20,12 +21,12 @@ use crate::visitor::Visitor;
 
 /// Create an `Expr` with default location from an `ExprKind`.
 pub fn create_expr(node: ExprKind) -> Expr {
-    Expr::new(Location::default(), Location::default(), node)
+    Expr::new(Location::default(), Some(Location::default()), node)
 }
 
 /// Create a `Stmt` with a default location from a `StmtKind`.
 pub fn create_stmt(node: StmtKind) -> Stmt {
-    Stmt::new(Location::default(), Location::default(), node)
+    Stmt::new(Location::default(), Some(Location::default()), node)
 }
 
 /// Generate source code from an [`Expr`].
@@ -614,21 +615,19 @@ pub fn has_comments<T>(located: &Located<T>, locator: &Locator) -> bool {
     let start = if match_leading_content(located, locator) {
         located.location
     } else {
-        Location::zero()
+        TextSize::default()
     };
 
     let end = if match_trailing_content(located, locator) {
-        located.end_location.unwrap()
+        located.end()
     } else {
-        let end_offset = Location::try_from(
-            locator.contents()[usize::from(located.end_location.unwrap())..]
-                .lines()
-                .next()
-                .unwrap()
-                .len(),
-        )
-        .unwrap();
-        located.end_location.unwrap() + end_offset
+        let end_offset = locator.contents()[usize::from(located.end())..]
+            .lines()
+            .next()
+            .unwrap()
+            .text_len();
+
+        located.end() + end_offset
     };
     has_comments_in(Range::new(start, end), locator)
 }
@@ -840,36 +839,22 @@ pub fn extract_globals(body: &[Stmt]) -> FxHashMap<&str, &Stmt> {
 /// Convert a location within a file (relative to `base`) to an absolute
 /// position.
 pub fn to_absolute(relative: Location, base: Location) -> Location {
-    if relative.row() == 1 {
-        Location::new(
-            relative.row() + base.row() - 1,
-            relative.column() + base.column(),
-        )
-    } else {
-        Location::new(relative.row() + base.row() - 1, relative.column())
-    }
+    base + relative
 }
 
 pub fn to_relative(absolute: Location, base: Location) -> Location {
-    if absolute.row() == base.row() {
-        Location::new(
-            absolute.row() - base.row() + 1,
-            absolute.column() - base.column(),
-        )
-    } else {
-        Location::new(absolute.row() - base.row() + 1, absolute.column())
-    }
+    absolute - base
 }
 
 /// Return `true` if a [`Located`] has leading content.
 pub fn match_leading_content<T>(located: &Located<T>, locator: &Locator) -> bool {
-    let prefix = &locator.contents()[..located.location];
+    let prefix = &locator.contents()[..usize::from(located.location)];
     prefix.chars().any(|char| !char.is_whitespace())
 }
 
 /// Return `true` if a [`Located`] has trailing content.
 pub fn match_trailing_content<T>(located: &Located<T>, locator: &Locator) -> bool {
-    let suffix = &locator.contents()[located.end_location..];
+    let suffix = &locator.contents()[usize::from(located.end())..];
     for char in suffix.chars() {
         if char == '#' {
             return false;
@@ -883,10 +868,7 @@ pub fn match_trailing_content<T>(located: &Located<T>, locator: &Locator) -> boo
 
 /// If a [`Located`] has a trailing comment, return the index of the hash.
 pub fn match_trailing_comment<T>(located: &Located<T>, locator: &Locator) -> Option<usize> {
-    let range = Range::new(
-        located.end_location.unwrap(),
-        Location::new(located.end_location.unwrap().row() + 1, 0),
-    );
+    let range = Range::new(located.end(), Location::new(located.end().row() + 1, 0));
     let suffix = locator.slice(range);
     for (i, char) in suffix.chars().enumerate() {
         if char == '#' {
@@ -901,7 +883,7 @@ pub fn match_trailing_comment<T>(located: &Located<T>, locator: &Locator) -> Opt
 
 /// Return the number of trailing empty lines following a statement.
 pub fn count_trailing_lines(stmt: &Stmt, locator: &Locator) -> usize {
-    let suffix = locator.after(Location::new(stmt.end_location.unwrap().row() + 1, 0));
+    let suffix = locator.after(Location::new(stmt.end().row() + 1, 0));
     suffix
         .lines()
         .take_while(|line| line.trim().is_empty())
@@ -979,7 +961,7 @@ pub fn excepthandler_name_range(handler: &Excepthandler, locator: &Locator) -> O
     } = &handler.node;
     match (name, type_) {
         (Some(_), Some(type_)) => {
-            let type_end_location = type_.end_location.unwrap();
+            let type_end_location = type_.end();
             let contents = locator.slice(Range::new(type_end_location, body[0].location));
             let range = lexer::lex_located(contents, Mode::Module, type_end_location)
                 .flatten()
@@ -1311,39 +1293,39 @@ pub fn locate_cmpops(contents: &str) -> Vec<LocatedCmpop> {
                     if let Some((_, _, end)) =
                         tok_iter.next_if(|(_, tok, _)| matches!(tok, Tok::In))
                     {
-                        ops.push(LocatedCmpop::new(start, end, Cmpop::NotIn));
+                        ops.push(LocatedCmpop::new(start, Some(end), Cmpop::NotIn));
                     }
                 }
                 Tok::In => {
-                    ops.push(LocatedCmpop::new(start, end, Cmpop::In));
+                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::In));
                 }
                 Tok::Is => {
                     let op = if let Some((_, _, end)) =
                         tok_iter.next_if(|(_, tok, _)| matches!(tok, Tok::Not))
                     {
-                        LocatedCmpop::new(start, end, Cmpop::IsNot)
+                        LocatedCmpop::new(start, Some(end), Cmpop::IsNot)
                     } else {
-                        LocatedCmpop::new(start, end, Cmpop::Is)
+                        LocatedCmpop::new(start, Some(end), Cmpop::Is)
                     };
                     ops.push(op);
                 }
                 Tok::NotEqual => {
-                    ops.push(LocatedCmpop::new(start, end, Cmpop::NotEq));
+                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::NotEq));
                 }
                 Tok::EqEqual => {
-                    ops.push(LocatedCmpop::new(start, end, Cmpop::Eq));
+                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::Eq));
                 }
                 Tok::GreaterEqual => {
-                    ops.push(LocatedCmpop::new(start, end, Cmpop::GtE));
+                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::GtE));
                 }
                 Tok::Greater => {
-                    ops.push(LocatedCmpop::new(start, end, Cmpop::Gt));
+                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::Gt));
                 }
                 Tok::LessEqual => {
-                    ops.push(LocatedCmpop::new(start, end, Cmpop::LtE));
+                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::LtE));
                 }
                 Tok::Less => {
-                    ops.push(LocatedCmpop::new(start, end, Cmpop::Lt));
+                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::Lt));
                 }
                 _ => {}
             }
@@ -1355,6 +1337,7 @@ pub fn locate_cmpops(contents: &str) -> Vec<LocatedCmpop> {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
+    use ruff_text_size::TextSize;
     use rustpython_parser as parser;
     use rustpython_parser::ast::{Cmpop, Location};
 
@@ -1412,7 +1395,7 @@ y = 2
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::new(1, 4), Location::new(1, 5),)
+            Range::new(Location::from(4), Location::from(5),)
         );
 
         let contents = r#"
@@ -1426,7 +1409,7 @@ def \
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::new(2, 2), Location::new(2, 3),)
+            Range::new(Location::from(9), Location::from(10),)
         );
 
         let contents = "class Class(): pass".trim();
@@ -1435,7 +1418,7 @@ def \
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::new(1, 6), Location::new(1, 11),)
+            Range::new(Location::from(6), Location::from(11),)
         );
 
         let contents = "class Class: pass".trim();
@@ -1444,7 +1427,7 @@ def \
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::new(1, 6), Location::new(1, 11),)
+            Range::new(Location::from(6), Location::from(11),)
         );
 
         let contents = r#"
@@ -1458,7 +1441,7 @@ class Class():
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::new(2, 6), Location::new(2, 11),)
+            Range::new(Location::from(20), Location::from(25),)
         );
 
         let contents = r#"x = y + 1"#.trim();
@@ -1467,7 +1450,7 @@ class Class():
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::new(1, 0), Location::new(1, 9),)
+            Range::new(Location::from(1), Location::from(9),)
         );
 
         Ok(())
@@ -1486,10 +1469,8 @@ else:
         let stmt = program.first().unwrap();
         let locator = Locator::new(contents);
         let range = else_range(stmt, &locator).unwrap();
-        assert_eq!(range.location.row(), 3);
-        assert_eq!(range.location.column(), 0);
-        assert_eq!(range.end_location.row(), 3);
-        assert_eq!(range.end_location.column(), 4);
+        assert_eq!(range.location, TextSize::from(13));
+        assert_eq!(range.end_location(), TextSize::from(17));
         Ok(())
     }
 
@@ -1497,11 +1478,8 @@ else:
     fn extract_first_colon_range() {
         let contents = "with a: pass";
         let locator = Locator::new(contents);
-        let range = first_colon_range(
-            Range::new(Location::new(1, 0), Location::new(1, contents.len())),
-            &locator,
-        )
-        .unwrap();
+        let range = first_colon_range(Range::new(Location::from(0), contents.text_len()), &locator)
+            .unwrap();
         assert_eq!(range.location.row(), 1);
         assert_eq!(range.location.column(), 6);
         assert_eq!(range.end_location.row(), 1);

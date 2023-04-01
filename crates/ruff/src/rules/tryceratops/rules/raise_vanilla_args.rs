@@ -16,35 +16,37 @@ impl Violation for RaiseVanillaArgs {
     }
 }
 
-fn collect_strings_impl<'a>(expr: &'a Expr, parts: &mut Vec<&'a str>) {
+fn any_string<F>(expr: &Expr, predicate: F) -> bool
+where
+    F: (Fn(&str) -> bool) + Copy,
+{
     match &expr.node {
         ExprKind::JoinedStr { values } => {
             for value in values {
-                collect_strings_impl(value, parts);
+                if any_string(value, predicate) {
+                    return true;
+                }
             }
         }
         ExprKind::Constant {
             value: Constant::Str(val),
             ..
-        } => parts.push(val),
+        } => {
+            if predicate(val.as_str()) {
+                return true;
+            }
+        }
         _ => {}
     }
-}
 
-fn collect_strings(expr: &Expr) -> Vec<&str> {
-    let mut parts = Vec::new();
-    collect_strings_impl(expr, &mut parts);
-    parts
+    false
 }
 
 /// TRY003
 pub fn raise_vanilla_args(checker: &mut Checker, expr: &Expr) {
     if let ExprKind::Call { args, .. } = &expr.node {
         if let Some(arg) = args.first() {
-            if collect_strings(arg)
-                .iter()
-                .any(|part| part.chars().any(char::is_whitespace))
-            {
+            if any_string(arg, |part| part.chars().any(char::is_whitespace)) {
                 checker
                     .diagnostics
                     .push(Diagnostic::new(RaiseVanillaArgs, Range::from(expr)));

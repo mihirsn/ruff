@@ -217,7 +217,7 @@ fn convert_to_class(
             stylist,
         ),
         stmt.location,
-        stmt.end_location.unwrap(),
+        stmt.end(),
     )
 }
 

@@ -99,7 +99,7 @@ fn return_values_for_else(stmt: &Stmt) -> Option<Loop> {
         test: nested_test,
         target,
         iter,
-        terminal: stmt.end_location.unwrap(),
+        terminal: stmt.end(),
     })
 }
 
@@ -164,7 +164,7 @@ fn return_values_for_siblings<'a>(stmt: &'a Stmt, sibling: &'a Stmt) -> Option<L
         test: nested_test,
         target,
         iter,
-        terminal: sibling.end_location.unwrap(),
+        terminal: sibling.end(),
     })
 }
 

@@ -275,10 +275,7 @@ pub fn nested_if_statements(
         return;
     };
 
-    let colon = first_colon_range(
-        Range::new(test.end_location.unwrap(), first_stmt.location),
-        checker.locator,
-    );
+    let colon = first_colon_range(Range::new(test.end(), first_stmt.location), checker.locator);
 
     // The fixer preserves comments in the nested body, but removes comments between
     // the outer and inner if statements.
@@ -378,7 +375,7 @@ pub fn needless_bool(checker: &mut Checker, stmt: &Stmt) {
                     checker.stylist,
                 ),
                 stmt.location,
-                stmt.end_location.unwrap(),
+                stmt.end(),
             ));
         } else {
             // Otherwise, we need to wrap the condition in a call to `bool`. (We've already
@@ -398,7 +395,7 @@ pub fn needless_bool(checker: &mut Checker, stmt: &Stmt) {
                     checker.stylist,
                 ),
                 stmt.location,
-                stmt.end_location.unwrap(),
+                stmt.end(),
             ));
         };
     }
@@ -526,11 +523,7 @@ pub fn use_ternary_operator(checker: &mut Checker, stmt: &Stmt, parent: Option<&
         Range::from(stmt),
     );
     if fixable && checker.patch(diagnostic.kind.rule()) {
-        diagnostic.set_fix(Edit::replacement(
-            contents,
-            stmt.location,
-            stmt.end_location.unwrap(),
-        ));
+        diagnostic.set_fix(Edit::replacement(contents, stmt.location, stmt.end()));
     }
     checker.diagnostics.push(diagnostic);
 }
@@ -600,7 +593,7 @@ pub fn if_with_same_arms(checker: &mut Checker, stmt: &Stmt, parent: Option<&Stm
                 IfWithSameArms,
                 Range::new(
                     if i == 0 { stmt.location } else { test.location },
-                    next_body.last().unwrap().end_location.unwrap(),
+                    next_body.last().unwrap().end(),
                 ),
             ));
         }
@@ -873,11 +866,7 @@ pub fn use_dict_get_with_default(
         Range::from(stmt),
     );
     if fixable && checker.patch(diagnostic.kind.rule()) {
-        diagnostic.set_fix(Edit::replacement(
-            contents,
-            stmt.location,
-            stmt.end_location.unwrap(),
-        ));
+        diagnostic.set_fix(Edit::replacement(contents, stmt.location, stmt.end()));
     }
     checker.diagnostics.push(diagnostic);
 }

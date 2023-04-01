@@ -45,6 +45,6 @@ pub fn fix_unnecessary_comprehension_any_all(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }

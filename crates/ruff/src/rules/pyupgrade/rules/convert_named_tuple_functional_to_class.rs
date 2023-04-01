@@ -167,7 +167,7 @@ fn convert_to_class(
     Edit::replacement(
         unparse_stmt(&create_class_def_stmt(typename, body, base_class), stylist),
         stmt.location,
-        stmt.end_location.unwrap(),
+        stmt.end(),
     )
 }
 

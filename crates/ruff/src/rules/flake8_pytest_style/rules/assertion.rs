@@ -209,7 +209,7 @@ pub fn unittest_assertion(
                         diagnostic.set_fix(Edit::replacement(
                             unparse_stmt(&stmt, checker.stylist),
                             expr.location,
-                            expr.end_location.unwrap(),
+                            expr.end(),
                         ));
                     }
                 }
@@ -327,7 +327,7 @@ fn fix_composite_condition(stmt: &Stmt, locator: &Locator, stylist: &Stylist) ->
     // Extract the module text.
     let contents = locator.slice(Range::new(
         Location::new(stmt.location.row(), 0),
-        Location::new(stmt.end_location.unwrap().row() + 1, 0),
+        Location::new(stmt.end().row() + 1, 0),
     ));
 
     // "Embed" it in a function definition, to preserve indentation while retaining valid source
@@ -422,7 +422,7 @@ fn fix_composite_condition(stmt: &Stmt, locator: &Locator, stylist: &Stylist) ->
     Ok(Edit::replacement(
         contents,
         Location::new(stmt.location.row(), 0),
-        Location::new(stmt.end_location.unwrap().row() + 1, 0),
+        Location::new(stmt.end().row() + 1, 0),
     ))
 }
 

@@ -276,7 +276,7 @@ pub fn literal_comparisons(
             diagnostic.set_fix(Edit::replacement(
                 content.to_string(),
                 expr.location,
-                expr.end_location.unwrap(),
+                expr.end(),
             ));
         }
     }

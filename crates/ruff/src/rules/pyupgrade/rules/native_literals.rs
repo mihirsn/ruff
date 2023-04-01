@@ -79,7 +79,7 @@ pub fn native_literals(
                         content
                     },
                     expr.location,
-                    expr.end_location.unwrap(),
+                    expr.end(),
                 ));
             }
             checker.diagnostics.push(diagnostic);
@@ -132,7 +132,7 @@ pub fn native_literals(
             diagnostic.set_fix(Edit::replacement(
                 arg_code.to_string(),
                 expr.location,
-                expr.end_location.unwrap(),
+                expr.end(),
             ));
         }
         checker.diagnostics.push(diagnostic);

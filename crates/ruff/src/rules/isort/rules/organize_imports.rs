@@ -53,7 +53,7 @@ impl AlwaysAutofixableViolation for UnsortedImports {
 
 fn extract_range(body: &[&Stmt]) -> Range {
     let location = body.first().unwrap().location;
-    let end_location = body.last().unwrap().end_location.unwrap();
+    let end_location = body.last().unwrap().end();
     Range::new(location, end_location)
 }
 

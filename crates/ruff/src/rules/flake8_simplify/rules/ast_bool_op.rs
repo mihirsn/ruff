@@ -285,7 +285,7 @@ pub fn duplicate_isinstance_call(checker: &mut Checker, expr: &Expr) {
                 diagnostic.set_fix(Edit::replacement(
                     unparse_expr(&bool_op, checker.stylist),
                     expr.location,
-                    expr.end_location.unwrap(),
+                    expr.end(),
                 ));
             }
             checker.diagnostics.push(diagnostic);
@@ -388,7 +388,7 @@ pub fn compare_with_tuple(checker: &mut Checker, expr: &Expr) {
             diagnostic.set_fix(Edit::replacement(
                 unparse_expr(&in_expr, checker.stylist),
                 expr.location,
-                expr.end_location.unwrap(),
+                expr.end(),
             ));
         }
         checker.diagnostics.push(diagnostic);
@@ -440,7 +440,7 @@ pub fn expr_and_not_expr(checker: &mut Checker, expr: &Expr) {
                     diagnostic.set_fix(Edit::replacement(
                         "False".to_string(),
                         expr.location,
-                        expr.end_location.unwrap(),
+                        expr.end(),
                     ));
                 }
                 checker.diagnostics.push(diagnostic);
@@ -494,7 +494,7 @@ pub fn expr_or_not_expr(checker: &mut Checker, expr: &Expr) {
                     diagnostic.set_fix(Edit::replacement(
                         "True".to_string(),
                         expr.location,
-                        expr.end_location.unwrap(),
+                        expr.end(),
                     ));
                 }
                 checker.diagnostics.push(diagnostic);
@@ -537,7 +537,7 @@ pub fn is_short_circuit(
         } = &value.node
         {
             if bool == &short_circuit_value {
-                return Some((location, expr.end_location.unwrap()));
+                return Some((location, expr.end()));
             }
         }
 
@@ -549,7 +549,7 @@ pub fn is_short_circuit(
         } = &next_value.node
         {
             if bool == &short_circuit_value {
-                return Some((location, expr.end_location.unwrap()));
+                return Some((location, expr.end()));
             }
         }
     }

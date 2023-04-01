@@ -142,11 +142,7 @@ fn fix_banned_relative_import(
             stylist,
         );
 
-        Some(Edit::replacement(
-            content,
-            stmt.location,
-            stmt.end_location.unwrap(),
-        ))
+        Some(Edit::replacement(content, stmt.location, stmt.end()))
     } else {
         None
     }

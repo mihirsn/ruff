@@ -58,7 +58,7 @@ fn metadata<T>(locator: &Locator, located: &Located<T>) -> Option<BlockMetadata>
     // in the token stream, in the event that the entire block is indented.
     let text = locator.slice(Range::new(
         Location::new(located.location.row(), 0),
-        located.end_location.unwrap(),
+        located.end(),
     ));
 
     let mut starter: Option<Tok> = None;
@@ -198,19 +198,16 @@ fn fix_py2_block(
             Some(Edit::replacement(
                 checker
                     .locator
-                    .slice(Range::new(start.location, end.end_location.unwrap()))
+                    .slice(Range::new(start.location, end.end()))
                     .to_string(),
                 stmt.location,
-                stmt.end_location.unwrap(),
+                stmt.end(),
             ))
         } else {
             indentation(checker.locator, stmt)
                 .and_then(|indentation| {
                     adjust_indentation(
-                        Range::new(
-                            Location::new(start.location.row(), 0),
-                            end.end_location.unwrap(),
-                        ),
+                        Range::new(Location::new(start.location.row(), 0), end.end()),
                         indentation,
                         checker.locator,
                         checker.stylist,
@@ -218,11 +215,7 @@ fn fix_py2_block(
                     .ok()
                 })
                 .map(|contents| {
-                    Edit::replacement(
-                        contents,
-                        Location::new(stmt.location.row(), 0),
-                        stmt.end_location.unwrap(),
-                    )
+                    Edit::replacement(contents, Location::new(stmt.location.row(), 0), stmt.end())
                 })
         }
     } else {
@@ -238,7 +231,7 @@ fn fix_py2_block(
             } else if let Some(else_) = block.else_ {
                 end_location = else_;
             } else {
-                end_location = body.last().unwrap().end_location.unwrap();
+                end_location = body.last().unwrap().end();
             }
         }
         Some(Edit::deletion(stmt.location, end_location))
@@ -265,19 +258,16 @@ fn fix_py3_block(
                 Some(Edit::replacement(
                     checker
                         .locator
-                        .slice(Range::new(start.location, end.end_location.unwrap()))
+                        .slice(Range::new(start.location, end.end()))
                         .to_string(),
                     stmt.location,
-                    stmt.end_location.unwrap(),
+                    stmt.end(),
                 ))
             } else {
                 indentation(checker.locator, stmt)
                     .and_then(|indentation| {
                         adjust_indentation(
-                            Range::new(
-                                Location::new(start.location.row(), 0),
-                                end.end_location.unwrap(),
-                            ),
+                            Range::new(Location::new(start.location.row(), 0), end.end()),
                             indentation,
                             checker.locator,
                             checker.stylist,
@@ -288,7 +278,7 @@ fn fix_py3_block(
                         Edit::replacement(
                             contents,
                             Location::new(stmt.location.row(), 0),
-                            stmt.end_location.unwrap(),
+                            stmt.end(),
                         )
                     })
             }
@@ -297,14 +287,11 @@ fn fix_py3_block(
             // Replace the `elif` with an `else, preserve the body of the elif, and remove
             // the rest.
             let end = body.last().unwrap();
-            let text = checker.locator.slice(Range::new(
-                test.end_location.unwrap(),
-                end.end_location.unwrap(),
-            ));
+            let text = checker.locator.slice(Range::new(test.end(), end.end()));
             Some(Edit::replacement(
                 format!("else{text}"),
                 stmt.location,
-                stmt.end_location.unwrap(),
+                stmt.end(),
             ))
         }
         _ => None,

@@ -71,7 +71,7 @@ impl Visitor<'_> for StringLinesVisitor {
             } = &value.node
             {
                 self.string_lines
-                    .extend(value.location.row()..=value.end_location.unwrap().row());
+                    .extend(value.location.row()..=value.end().row());
             }
         }
         visitor::walk_stmt(self, stmt);

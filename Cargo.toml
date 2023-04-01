@@ -31,11 +31,11 @@ proc-macro2 = { version = "1.0.51" }
 quote = { version = "1.0.23" }
 regex = { version = "1.7.1" }
 rustc-hash = { version = "1.1.0" }
+ruff_text_size = { path = "../RustPython/ruff_text_size" }
 rustpython-common = { path = "../RustPython/common"}
 rustpython-parser = { features = [
   "lalrpop",
   "serde",
-  "byte_offsets"
 ], path = "../RustPython/compiler/parser" }
 schemars = { version = "0.8.12" }
 serde = { version = "1.0.152", features = ["derive"] }

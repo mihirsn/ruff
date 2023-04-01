@@ -154,14 +154,8 @@ pub fn logging_call(checker: &mut Checker, func: &Expr, args: &[Expr], keywords:
         if let Some(logging_call_type) = LoggingCallType::from_attribute(attr.as_str()) {
             let call_args = SimpleCallArgs::new(args, keywords);
             let level_call_range = Range::new(
-                Location::new(
-                    func.location.row(),
-                    value.end_location.unwrap().column() + 1,
-                ),
-                Location::new(
-                    func.end_location.unwrap().row(),
-                    func.end_location.unwrap().column(),
-                ),
+                Location::new(func.location.row(), value.end().column() + 1),
+                Location::new(func.end().row(), func.end().column()),
             );
 
             // G001 - G004

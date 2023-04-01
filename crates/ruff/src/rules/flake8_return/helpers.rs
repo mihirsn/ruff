@@ -29,11 +29,11 @@ pub fn result_exists(returns: &[(&Stmt, Option<&Expr>)]) -> bool {
 /// This method assumes that the statement is the last statement in its body; specifically, that
 /// the statement isn't followed by a semicolon, followed by a multi-line statement.
 pub fn end_of_last_statement(stmt: &Stmt, locator: &Locator) -> Location {
-    let contents = locator.after(stmt.end_location.unwrap());
+    let contents = locator.after(stmt.end());
 
     // End-of-file, so just return the end of the statement.
     if contents.is_empty() {
-        return stmt.end_location.unwrap();
+        return stmt.end();
     }
 
     // Otherwise, find the end of the last line that's "part of" the statement.
@@ -41,10 +41,7 @@ pub fn end_of_last_statement(stmt: &Stmt, locator: &Locator) -> Location {
         if line.ends_with('\\') {
             continue;
         }
-        return to_absolute(
-            Location::new(lineno + 1, line.chars().count()),
-            stmt.end_location.unwrap(),
-        );
+        return to_absolute(Location::new(lineno + 1, line.chars().count()), stmt.end());
     }
 
     unreachable!("Expected to find end-of-statement")

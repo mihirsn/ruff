@@ -162,11 +162,7 @@ pub fn yoda_conditions(
             Range::from(expr),
         );
         if checker.patch(diagnostic.kind.rule()) {
-            diagnostic.set_fix(Edit::replacement(
-                suggestion,
-                expr.location,
-                expr.end_location.unwrap(),
-            ));
+            diagnostic.set_fix(Edit::replacement(suggestion, expr.location, expr.end()));
         }
         checker.diagnostics.push(diagnostic);
     } else {

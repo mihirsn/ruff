@@ -1,3 +1,4 @@
+use crate::source_code::SourceLocation;
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use rustpython_parser::ast::Location;
 use std::fmt;
@@ -58,13 +59,13 @@ impl LineIndex {
         self.inner.kind
     }
 
-    /// Converts a [`Location`] to it's [byte offset](TextSize) in the source code.
-    pub fn location_offset(&self, location: Location, contents: &str) -> TextSize {
-        let line_index = OneIndexed::new(location.row()).unwrap();
+    /// Converts a [`SourceLocation`] to it's [byte offset](TextSize) in the source code.
+    pub fn location_offset(&self, location: SourceLocation, contents: &str) -> TextSize {
+        let line_index = location.row;
         let line_range = self.line_range(line_index, contents);
 
         let column_offset = match self.kind() {
-            IndexKind::Ascii => TextSize::try_from(location.column()).unwrap(),
+            IndexKind::Ascii => TextSize::try_from(location.column).unwrap(),
             IndexKind::Utf8 => {
                 let line = &contents[line_range];
 

@@ -42,7 +42,7 @@ pub fn open_alias(checker: &mut Checker, expr: &Expr, func: &Expr) {
             diagnostic.set_fix(Edit::replacement(
                 "open".to_string(),
                 func.location,
-                func.end_location.unwrap(),
+                func.end(),
             ));
         }
         checker.diagnostics.push(diagnostic);

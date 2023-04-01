@@ -48,13 +48,13 @@ impl<T> Located<T> {
 
 impl<T> From<&Located<T>> for Range {
     fn from(located: &Located<T>) -> Self {
-        Self::new(located.location, located.end_location.unwrap())
+        Self::new(located.location, located.end())
     }
 }
 
 impl<T> From<&Box<Located<T>>> for Range {
     fn from(located: &Box<Located<T>>) -> Self {
-        Self::new(located.location, located.end_location.unwrap())
+        Self::new(located.location, located.end())
     }
 }
 
@@ -598,11 +598,8 @@ impl From<(rustpython_parser::ast::Excepthandler, &Locator<'_>)> for Excepthandl
 
         // Find the start and end of the `body`.
         let body = {
-            let (body_location, body_end_location) = expand_indented_block(
-                excepthandler.location,
-                body.last().unwrap().end_location.unwrap(),
-                locator,
-            );
+            let (body_location, body_end_location) =
+                expand_indented_block(excepthandler.location, body.last().unwrap().end(), locator);
             Body {
                 location: body_location,
                 end_location: Some(body_end_location),
@@ -708,7 +705,7 @@ impl From<(rustpython_parser::ast::MatchCase, &Locator<'_>)> for MatchCase {
         let body = {
             let (body_location, body_end_location) = expand_indented_block(
                 match_case.pattern.location,
-                match_case.body.last().unwrap().end_location.unwrap(),
+                match_case.body.last().unwrap().end(),
                 locator,
             );
             Body {
@@ -789,11 +786,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -832,11 +826,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             rustpython_parser::ast::StmtKind::If { test, body, orelse } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -888,8 +879,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
                     } else {
                         // Find the start and end of the `else`.
                         let (orelse_location, orelse_end_location) = expand_indented_block(
-                            body.end_location.unwrap(),
-                            orelse.last().unwrap().end_location.unwrap(),
+                            body.end(),
+                            orelse.last().unwrap().end(),
                             locator,
                         );
                         let orelse = Body {
@@ -938,11 +929,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -983,11 +971,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -1078,12 +1063,10 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
                                 rustpython_parser::Tok::DoubleSlashEqual
                             }
                         };
-                        let (op_location, op_end_location) = find_tok(
-                            target.end_location.unwrap(),
-                            value.location,
-                            locator,
-                            |tok| tok == target_tok,
-                        );
+                        let (op_location, op_end_location) =
+                            find_tok(target.end(), value.location, locator, |tok| {
+                                tok == target_tok
+                            });
                         Operator::new(op_location, op_end_location, (&op).into())
                     },
                     target: Box::new((*target, locator).into()),
@@ -1118,11 +1101,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -1137,11 +1117,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
 
                 // Find the start and end of the `orelse`.
                 let orelse = (!orelse.is_empty()).then(|| {
-                    let (orelse_location, orelse_end_location) = expand_indented_block(
-                        body.end_location.unwrap(),
-                        orelse.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (orelse_location, orelse_end_location) =
+                        expand_indented_block(body.end(), orelse.last().unwrap().end(), locator);
                     Body {
                         location: orelse_location,
                         end_location: Some(orelse_end_location),
@@ -1177,11 +1154,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -1196,11 +1170,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
 
                 // Find the start and end of the `orelse`.
                 let orelse = (!orelse.is_empty()).then(|| {
-                    let (orelse_location, orelse_end_location) = expand_indented_block(
-                        body.end_location.unwrap(),
-                        orelse.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (orelse_location, orelse_end_location) =
+                        expand_indented_block(body.end(), orelse.last().unwrap().end(), locator);
                     Body {
                         location: orelse_location,
                         end_location: Some(orelse_end_location),
@@ -1230,11 +1201,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             rustpython_parser::ast::StmtKind::While { test, body, orelse } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -1249,11 +1217,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
 
                 // Find the start and end of the `orelse`.
                 let orelse = (!orelse.is_empty()).then(|| {
-                    let (orelse_location, orelse_end_location) = expand_indented_block(
-                        body.end_location.unwrap(),
-                        orelse.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (orelse_location, orelse_end_location) =
+                        expand_indented_block(body.end(), orelse.last().unwrap().end(), locator);
                     Body {
                         location: orelse_location,
                         end_location: Some(orelse_end_location),
@@ -1285,11 +1250,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -1324,11 +1286,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -1387,11 +1346,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -1412,12 +1368,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
                 // Find the start and end of the `orelse`.
                 let orelse = (!orelse.is_empty()).then(|| {
                     let (orelse_location, orelse_end_location) = expand_indented_block(
-                        handlers
-                            .last()
-                            .map_or(body.end_location.unwrap(), |handler| {
-                                handler.end_location.unwrap()
-                            }),
-                        orelse.last().unwrap().end_location.unwrap(),
+                        handlers.last().map_or(body.end(), |handler| handler.end()),
+                        orelse.last().unwrap().end(),
                         locator,
                     );
                     Body {
@@ -1436,14 +1388,10 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
                 let finalbody = (!finalbody.is_empty()).then(|| {
                     let (finalbody_location, finalbody_end_location) = expand_indented_block(
                         orelse.as_ref().map_or(
-                            handlers
-                                .last()
-                                .map_or(body.end_location.unwrap(), |handler| {
-                                    handler.end_location.unwrap()
-                                }),
-                            |orelse| orelse.end_location.unwrap(),
+                            handlers.last().map_or(body.end(), |handler| handler.end()),
+                            |orelse| orelse.end(),
                         ),
-                        finalbody.last().unwrap().end_location.unwrap(),
+                        finalbody.last().unwrap().end(),
                         locator,
                     );
                     Body {
@@ -1460,14 +1408,10 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
 
                 let end_location = finalbody.as_ref().map_or(
                     orelse.as_ref().map_or(
-                        handlers
-                            .last()
-                            .map_or(body.end_location.unwrap(), |handler| {
-                                handler.end_location.unwrap()
-                            }),
-                        |orelse| orelse.end_location.unwrap(),
+                        handlers.last().map_or(body.end(), |handler| handler.end()),
+                        |orelse| orelse.end(),
                     ),
-                    |finalbody| finalbody.end_location.unwrap(),
+                    |finalbody| finalbody.end(),
                 );
 
                 Stmt {
@@ -1491,11 +1435,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
             } => {
                 // Find the start and end of the `body`.
                 let body = {
-                    let (body_location, body_end_location) = expand_indented_block(
-                        stmt.location,
-                        body.last().unwrap().end_location.unwrap(),
-                        locator,
-                    );
+                    let (body_location, body_end_location) =
+                        expand_indented_block(stmt.location, body.last().unwrap().end(), locator);
                     Body {
                         location: body_location,
                         end_location: Some(body_end_location),
@@ -1516,12 +1457,8 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
                 // Find the start and end of the `orelse`.
                 let orelse = (!orelse.is_empty()).then(|| {
                     let (orelse_location, orelse_end_location) = expand_indented_block(
-                        handlers
-                            .last()
-                            .map_or(body.end_location.unwrap(), |handler| {
-                                handler.end_location.unwrap()
-                            }),
-                        orelse.last().unwrap().end_location.unwrap(),
+                        handlers.last().map_or(body.end(), |handler| handler.end()),
+                        orelse.last().unwrap().end(),
                         locator,
                     );
                     Body {
@@ -1540,14 +1477,10 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
                 let finalbody = (!finalbody.is_empty()).then(|| {
                     let (finalbody_location, finalbody_end_location) = expand_indented_block(
                         orelse.as_ref().map_or(
-                            handlers
-                                .last()
-                                .map_or(body.end_location.unwrap(), |handler| {
-                                    handler.end_location.unwrap()
-                                }),
-                            |orelse| orelse.end_location.unwrap(),
+                            handlers.last().map_or(body.end(), |handler| handler.end()),
+                            |orelse| orelse.end(),
                         ),
-                        finalbody.last().unwrap().end_location.unwrap(),
+                        finalbody.last().unwrap().end(),
                         locator,
                     );
                     Body {
@@ -1564,14 +1497,10 @@ impl From<(rustpython_parser::ast::Stmt, &Locator<'_>)> for Stmt {
 
                 let end_location = finalbody.as_ref().map_or(
                     orelse.as_ref().map_or(
-                        handlers
-                            .last()
-                            .map_or(body.end_location.unwrap(), |handler| {
-                                handler.end_location.unwrap()
-                            }),
-                        |orelse| orelse.end_location.unwrap(),
+                        handlers.last().map_or(body.end(), |handler| handler.end()),
+                        |orelse| orelse.end(),
                     ),
-                    |finalbody| finalbody.end_location.unwrap(),
+                    |finalbody| finalbody.end(),
                 );
 
                 Stmt {
@@ -1761,12 +1690,10 @@ impl From<(rustpython_parser::ast::Expr, &Locator<'_>)> for Expr {
                                 rustpython_parser::ast::Boolop::And => rustpython_parser::Tok::And,
                                 rustpython_parser::ast::Boolop::Or => rustpython_parser::Tok::Or,
                             };
-                            let (op_location, op_end_location) = find_tok(
-                                left.end_location.unwrap(),
-                                right.location,
-                                locator,
-                                |tok| tok == target_tok,
-                            );
+                            let (op_location, op_end_location) =
+                                find_tok(left.end(), right.location, locator, |tok| {
+                                    tok == target_tok
+                                });
                             BoolOp::new(op_location, op_end_location, (&op).into())
                         })
                         .collect(),
@@ -1823,9 +1750,7 @@ impl From<(rustpython_parser::ast::Expr, &Locator<'_>)> for Expr {
                             }
                         };
                         let (op_location, op_end_location) =
-                            find_tok(left.end_location.unwrap(), right.location, locator, |tok| {
-                                tok == target_tok
-                            });
+                            find_tok(left.end(), right.location, locator, |tok| tok == target_tok);
                         Operator::new(op_location, op_end_location, (&op).into())
                     },
                     left: Box::new((*left, locator).into()),
@@ -2028,12 +1953,10 @@ impl From<(rustpython_parser::ast::Expr, &Locator<'_>)> for Expr {
                                 // TODO(charlie): Break this into two tokens.
                                 rustpython_parser::ast::Cmpop::NotIn => rustpython_parser::Tok::In,
                             };
-                            let (op_location, op_end_location) = find_tok(
-                                left.end_location.unwrap(),
-                                right.location,
-                                locator,
-                                |tok| tok == target_tok,
-                            );
+                            let (op_location, op_end_location) =
+                                find_tok(left.end(), right.location, locator, |tok| {
+                                    tok == target_tok
+                                });
                             CmpOp::new(op_location, op_end_location, (&op).into())
                         })
                         .collect(),
@@ -2162,7 +2085,7 @@ impl From<(rustpython_parser::ast::Expr, &Locator<'_>)> for Expr {
             rustpython_parser::ast::ExprKind::Slice { lower, upper, step } => {
                 // Locate the colon tokens, which indicate the number of index segments.
                 let tokens = rustpython_parser::lexer::lex_located(
-                    locator.slice(Range::new(expr.location, expr.end_location.unwrap())),
+                    locator.slice(Range::new(expr.location, expr.end())),
                     Mode::Module,
                     expr.location,
                 );
@@ -2207,7 +2130,7 @@ impl From<(rustpython_parser::ast::Expr, &Locator<'_>)> for Expr {
                 );
                 let upper = SliceIndex::new(
                     first_colon.unwrap(),
-                    second_colon.unwrap_or(expr.end_location.unwrap()),
+                    second_colon.unwrap_or(expr.end()),
                     upper.map_or(SliceIndexKind::Empty, |node| SliceIndexKind::Index {
                         value: Box::new((*node, locator).into()),
                     }),
@@ -2215,7 +2138,7 @@ impl From<(rustpython_parser::ast::Expr, &Locator<'_>)> for Expr {
                 let step = second_colon.map(|second_colon| {
                     SliceIndex::new(
                         second_colon,
-                        expr.end_location.unwrap(),
+                        expr.end(),
                         step.map_or(SliceIndexKind::Empty, |node| SliceIndexKind::Index {
                             value: Box::new((*node, locator).into()),
                         }),

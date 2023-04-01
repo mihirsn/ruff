@@ -28,9 +28,9 @@ pub fn annotate_imports<'a>(
 
                 // Find comments inline.
                 let mut inline = vec![];
-                while let Some(comment) = comments_iter.next_if(|comment| {
-                    comment.end_location.row() == import.end_location.unwrap().row()
-                }) {
+                while let Some(comment) = comments_iter
+                    .next_if(|comment| comment.end_location.row() == import.end().row())
+                {
                     inline.push(comment);
                 }
 
@@ -89,9 +89,9 @@ pub fn annotate_imports<'a>(
 
                     // Find comments inline.
                     let mut alias_inline = vec![];
-                    while let Some(comment) = comments_iter.next_if(|comment| {
-                        comment.end_location.row() == alias.end_location.unwrap().row()
-                    }) {
+                    while let Some(comment) = comments_iter
+                        .next_if(|comment| comment.end_location.row() == alias.end().row())
+                    {
                         alias_inline.push(comment);
                     }
 

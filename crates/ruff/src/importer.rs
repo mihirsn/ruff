@@ -116,7 +116,7 @@ impl<'a> Importer<'a> {
         Ok(Edit::replacement(
             state.to_string(),
             stmt.location,
-            stmt.end_location.unwrap(),
+            stmt.end(),
         ))
     }
 }
@@ -156,7 +156,7 @@ fn match_docstring_end(body: &[Stmt]) -> Option<Location> {
         }
         stmt = next;
     }
-    Some(stmt.end_location.unwrap())
+    Some(stmt.end())
 }
 
 /// Find the location at which a "top-of-file" import should be inserted,
@@ -173,7 +173,7 @@ fn match_docstring_end(body: &[Stmt]) -> Option<Location> {
 /// The location returned will be the start of the `import os` statement,
 /// along with a trailing newline suffix.
 fn end_of_statement_insertion(stmt: &Stmt, locator: &Locator, stylist: &Stylist) -> Insertion {
-    let location = stmt.end_location.unwrap();
+    let location = stmt.end();
     let mut tokens = lexer::lex_located(locator.after(location), Mode::Module, location).flatten();
     if let Some((.., Tok::Semi, end)) = tokens.next() {
         // If the first token after the docstring is a semicolon, insert after the semicolon as an

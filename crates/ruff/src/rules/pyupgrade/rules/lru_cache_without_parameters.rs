@@ -45,13 +45,13 @@ pub fn lru_cache_without_parameters(checker: &mut Checker, decorator_list: &[Exp
         {
             let mut diagnostic = Diagnostic::new(
                 LRUCacheWithoutParameters,
-                Range::new(func.end_location.unwrap(), expr.end_location.unwrap()),
+                Range::new(func.end(), expr.end()),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 diagnostic.set_fix(Edit::replacement(
                     unparse_expr(func, checker.stylist),
                     expr.location,
-                    expr.end_location.unwrap(),
+                    expr.end(),
                 ));
             }
             checker.diagnostics.push(diagnostic);

@@ -284,8 +284,7 @@ fn check_fixture_decorator(checker: &mut Checker, func_name: &str, decorator: &E
                 && args.is_empty()
                 && keywords.is_empty()
             {
-                let fix =
-                    Edit::deletion(func.end_location.unwrap(), decorator.end_location.unwrap());
+                let fix = Edit::deletion(func.end(), decorator.end());
                 pytest_fixture_parentheses(checker, decorator, fix, "", "()");
             }
 
@@ -344,7 +343,7 @@ fn check_fixture_decorator(checker: &mut Checker, func_name: &str, decorator: &E
                 .enabled(Rule::PytestFixtureIncorrectParenthesesStyle)
                 && checker.settings.flake8_pytest_style.fixture_parentheses
             {
-                let fix = Edit::insertion("()".to_string(), decorator.end_location.unwrap());
+                let fix = Edit::insertion("()".to_string(), decorator.end());
                 pytest_fixture_parentheses(checker, decorator, fix, "()", "");
             }
         }

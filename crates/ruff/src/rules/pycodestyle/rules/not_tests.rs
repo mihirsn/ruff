@@ -101,7 +101,7 @@ pub fn not_tests(
                                 diagnostic.set_fix(Edit::replacement(
                                     compare(left, &[Cmpop::NotIn], comparators, checker.stylist),
                                     expr.location,
-                                    expr.end_location.unwrap(),
+                                    expr.end(),
                                 ));
                             }
                             checker.diagnostics.push(diagnostic);
@@ -114,7 +114,7 @@ pub fn not_tests(
                                 diagnostic.set_fix(Edit::replacement(
                                     compare(left, &[Cmpop::IsNot], comparators, checker.stylist),
                                     expr.location,
-                                    expr.end_location.unwrap(),
+                                    expr.end(),
                                 ));
                             }
                             checker.diagnostics.push(diagnostic);

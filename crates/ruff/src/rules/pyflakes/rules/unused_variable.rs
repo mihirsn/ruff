@@ -198,9 +198,10 @@ fn remove_unused_variable(
 ) -> Option<(DeletionKind, Edit)> {
     // First case: simple assignment (`x = 1`)
     if let StmtKind::Assign { targets, value, .. } = &stmt.node {
-        if let Some(target) = targets.iter().find(|target| {
-            range.location == target.location && range.end_location == target.end_location.unwrap()
-        }) {
+        if let Some(target) = targets
+            .iter()
+            .find(|target| range.location == target.location && range.end_location == target.end())
+        {
             if matches!(target.node, ExprKind::Name { .. }) {
                 return if targets.len() > 1
                     || contains_effect(value, |id| checker.ctx.is_builtin(id))
@@ -293,12 +294,12 @@ fn remove_unused_variable(
         for item in items {
             if let Some(optional_vars) = &item.optional_vars {
                 if optional_vars.location == range.location
-                    && optional_vars.end_location.unwrap() == range.end_location
+                    && optional_vars.end() == range.end_location
                 {
                     return Some((
                         DeletionKind::Partial,
                         Edit::deletion(
-                            item.context_expr.end_location.unwrap(),
+                            item.context_expr.end(),
                             // The end of the `Withitem` is the colon, comma, or closing
                             // parenthesis following the `optional_vars`.
                             match_token(&item.context_expr, checker.locator, |tok| {

@@ -73,7 +73,7 @@ pub fn deprecated_unittest_alias(checker: &mut Checker, expr: &Expr) {
         diagnostic.set_fix(Edit::replacement(
             format!("self.{target}"),
             expr.location,
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);

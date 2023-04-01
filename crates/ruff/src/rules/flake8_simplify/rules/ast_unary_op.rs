@@ -118,7 +118,7 @@ pub fn negation_with_equal_op(checker: &mut Checker, expr: &Expr, op: &Unaryop, 
                 checker.stylist,
             ),
             expr.location,
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);
@@ -169,7 +169,7 @@ pub fn negation_with_not_equal_op(
                 checker.stylist,
             ),
             expr.location,
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);
@@ -197,7 +197,7 @@ pub fn double_negation(checker: &mut Checker, expr: &Expr, op: &Unaryop, operand
         diagnostic.set_fix(Edit::replacement(
             unparse_expr(operand, checker.stylist),
             expr.location,
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);

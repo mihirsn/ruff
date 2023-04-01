@@ -119,7 +119,7 @@ fn create_check(
             diagnostic.set_fix(Edit::replacement(
                 content.to_string(),
                 mode_param.location,
-                mode_param.end_location.unwrap(),
+                mode_param.end(),
             ));
         } else {
             diagnostic.try_set_fix(|| create_remove_param_fix(locator, expr, mode_param));

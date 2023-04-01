@@ -97,7 +97,7 @@ pub fn use_pep604_isinstance(checker: &mut Checker, expr: &Expr, func: &Expr, ar
                     diagnostic.set_fix(Edit::replacement(
                         unparse_expr(&union(elts), checker.stylist),
                         types.location,
-                        types.end_location.unwrap(),
+                        types.end(),
                     ));
                 }
                 checker.diagnostics.push(diagnostic);

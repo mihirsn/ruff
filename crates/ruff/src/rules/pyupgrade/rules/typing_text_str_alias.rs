@@ -35,7 +35,7 @@ pub fn typing_text_str_alias(checker: &mut Checker, expr: &Expr) {
             diagnostic.set_fix(Edit::replacement(
                 "str".to_string(),
                 expr.location,
-                expr.end_location.unwrap(),
+                expr.end(),
             ));
         }
         checker.diagnostics.push(diagnostic);

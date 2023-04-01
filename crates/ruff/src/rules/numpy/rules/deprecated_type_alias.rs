@@ -79,7 +79,7 @@ pub fn deprecated_type_alias(checker: &mut Checker, expr: &Expr) {
                 }
                 .to_string(),
                 expr.location,
-                expr.end_location.unwrap(),
+                expr.end(),
             ));
         }
         checker.diagnostics.push(diagnostic);

@@ -146,18 +146,14 @@ impl<'a> Visitor<'a> for ReturnVisitor<'a> {
                 }
             }
             StmtKind::For { .. } | StmtKind::AsyncFor { .. } | StmtKind::While { .. } => {
-                self.stack
-                    .loops
-                    .push((stmt.location, stmt.end_location.unwrap()));
+                self.stack.loops.push((stmt.location, stmt.end()));
 
                 self.parents.push(stmt);
                 visitor::walk_stmt(self, stmt);
                 self.parents.pop();
             }
             StmtKind::Try { .. } | StmtKind::TryStar { .. } => {
-                self.stack
-                    .tries
-                    .push((stmt.location, stmt.end_location.unwrap()));
+                self.stack.tries.push((stmt.location, stmt.end()));
 
                 self.parents.push(stmt);
                 visitor::walk_stmt(self, stmt);

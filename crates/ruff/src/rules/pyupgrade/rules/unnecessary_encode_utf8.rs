@@ -130,7 +130,7 @@ fn replace_with_bytes_literal(locator: &Locator, expr: &Expr, constant: &Expr) -
         }
         prev = Some(end);
     }
-    Edit::replacement(replacement, expr.location, expr.end_location.unwrap())
+    Edit::replacement(replacement, expr.location, expr.end())
 }
 
 /// UP012
@@ -182,7 +182,7 @@ pub fn unnecessary_encode_utf8(
                                 checker.locator,
                                 func.location,
                                 kwarg.location,
-                                kwarg.end_location.unwrap(),
+                                kwarg.end(),
                                 args,
                                 kwargs,
                                 false,
@@ -204,7 +204,7 @@ pub fn unnecessary_encode_utf8(
                                 checker.locator,
                                 func.location,
                                 arg.location,
-                                arg.end_location.unwrap(),
+                                arg.end(),
                                 args,
                                 kwargs,
                                 false,
@@ -233,7 +233,7 @@ pub fn unnecessary_encode_utf8(
                                 checker.locator,
                                 func.location,
                                 kwarg.location,
-                                kwarg.end_location.unwrap(),
+                                kwarg.end(),
                                 args,
                                 kwargs,
                                 false,
@@ -255,7 +255,7 @@ pub fn unnecessary_encode_utf8(
                                 checker.locator,
                                 func.location,
                                 arg.location,
-                                arg.end_location.unwrap(),
+                                arg.end(),
                                 args,
                                 kwargs,
                                 false,

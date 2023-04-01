@@ -8,7 +8,7 @@ pub fn indentation<'a, T>(locator: &'a Locator, located: &'a Located<T>) -> Opti
     let range = Range::from(located);
     let indentation = locator.slice(Range::new(
         Location::new(range.location.row(), 0),
-        Location::new(range.location.row(), range.location.column()),
+        range.location,
     ));
     if indentation.chars().all(char::is_whitespace) {
         Some(indentation)

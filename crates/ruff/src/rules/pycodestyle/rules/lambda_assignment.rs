@@ -99,11 +99,7 @@ pub fn lambda_assignment(checker: &mut Checker, target: &Expr, value: &Expr, stm
                         indented.push_str(line);
                     }
                 }
-                diagnostic.set_fix(Edit::replacement(
-                    indented,
-                    stmt.location,
-                    stmt.end_location.unwrap(),
-                ));
+                diagnostic.set_fix(Edit::replacement(indented, stmt.location, stmt.end()));
             }
 
             checker.diagnostics.push(diagnostic);

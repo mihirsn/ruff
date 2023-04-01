@@ -55,14 +55,14 @@ pub fn newline_after_last_paragraph(checker: &mut Checker, docstring: &Docstring
                         diagnostic.set_fix(Edit::replacement(
                             content,
                             Location::new(
-                                docstring.expr.end_location.unwrap().row(),
-                                docstring.expr.end_location.unwrap().column()
+                                docstring.expr.end().row(),
+                                docstring.expr.end().column()
                                     - num_trailing_spaces
                                     - num_trailing_quotes,
                             ),
                             Location::new(
-                                docstring.expr.end_location.unwrap().row(),
-                                docstring.expr.end_location.unwrap().column() - num_trailing_quotes,
+                                docstring.expr.end().row(),
+                                docstring.expr.end().column() - num_trailing_quotes,
                             ),
                         ));
                     }

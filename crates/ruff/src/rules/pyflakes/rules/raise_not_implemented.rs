@@ -50,7 +50,7 @@ pub fn raise_not_implemented(checker: &mut Checker, expr: &Expr) {
         diagnostic.set_fix(Edit::replacement(
             "NotImplementedError".to_string(),
             expr.location,
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);

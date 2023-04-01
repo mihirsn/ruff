@@ -24,7 +24,7 @@ pub fn collapsible_else_if(orelse: &[Stmt], locator: &Locator) -> Option<Diagnos
             if locator
                 .slice(Range {
                     location: first.location,
-                    end_location: first.end_location.unwrap(),
+                    end_location: first.end(),
                 })
                 .starts_with("if")
             {

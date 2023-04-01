@@ -115,7 +115,7 @@ pub fn use_pep604_annotation(checker: &mut Checker, expr: &Expr, value: &Expr, s
                 diagnostic.set_fix(Edit::replacement(
                     unparse_expr(&optional(slice), checker.stylist),
                     expr.location,
-                    expr.end_location.unwrap(),
+                    expr.end(),
                 ));
             }
             checker.diagnostics.push(diagnostic);
@@ -132,7 +132,7 @@ pub fn use_pep604_annotation(checker: &mut Checker, expr: &Expr, value: &Expr, s
                         diagnostic.set_fix(Edit::replacement(
                             unparse_expr(&union(elts), checker.stylist),
                             expr.location,
-                            expr.end_location.unwrap(),
+                            expr.end(),
                         ));
                     }
                     _ => {
@@ -140,7 +140,7 @@ pub fn use_pep604_annotation(checker: &mut Checker, expr: &Expr, value: &Expr, s
                         diagnostic.set_fix(Edit::replacement(
                             unparse_expr(slice, checker.stylist),
                             expr.location,
-                            expr.end_location.unwrap(),
+                            expr.end(),
                         ));
                     }
                 }

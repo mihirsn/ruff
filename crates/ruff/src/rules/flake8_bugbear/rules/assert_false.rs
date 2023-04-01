@@ -66,7 +66,7 @@ pub fn assert_false(checker: &mut Checker, stmt: &Stmt, test: &Expr, msg: Option
         diagnostic.set_fix(Edit::replacement(
             unparse_stmt(&assertion_error(msg), checker.stylist),
             stmt.location,
-            stmt.end_location.unwrap(),
+            stmt.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);

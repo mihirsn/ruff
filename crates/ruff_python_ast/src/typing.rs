@@ -1,6 +1,7 @@
 use anyhow::Result;
+use ruff_text_size::TextLen;
 use rustpython_parser as parser;
-use rustpython_parser::ast::{Expr, Location};
+use rustpython_parser::ast::Expr;
 
 use crate::relocate::relocate_expr;
 use crate::source_code::Locator;
@@ -37,10 +38,7 @@ pub fn parse_type_annotation(
         let expr = parser::parse_expression_located(
             value,
             "<filename>",
-            Location::new(
-                range.location.row(),
-                range.location.column() + leading_quote.len(),
-            ),
+            range.location + leading_quote.text_len(),
         )?;
         Ok((expr, AnnotationKind::Simple))
     } else {

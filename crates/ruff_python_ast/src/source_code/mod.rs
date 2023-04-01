@@ -258,3 +258,9 @@ impl PartialEq for FileSourceCode {
 }
 
 impl Eq for FileSourceCode {}
+
+#[derive(Debug, Clone)]
+pub struct SourceLocation {
+    pub row: OneIndexed,
+    pub column: OneIndexed,
+}

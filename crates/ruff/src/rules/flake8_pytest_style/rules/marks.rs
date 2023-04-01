@@ -116,7 +116,7 @@ fn check_useless_usefixtures(checker: &mut Checker, decorator: &Expr, call_path:
             Diagnostic::new(PytestUseFixturesWithoutParameters, Range::from(decorator));
         if checker.patch(diagnostic.kind.rule()) {
             let at_start = Location::new(decorator.location.row(), decorator.location.column() - 1);
-            diagnostic.set_fix(Edit::deletion(at_start, decorator.end_location.unwrap()));
+            diagnostic.set_fix(Edit::deletion(at_start, decorator.end()));
         }
         checker.diagnostics.push(diagnostic);
     }

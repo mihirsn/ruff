@@ -81,10 +81,7 @@ pub fn invalid_literal_comparison(
                         diagnostic.set_fix(Edit::replacement(
                             content,
                             helpers::to_absolute(located_op.location, location.location),
-                            helpers::to_absolute(
-                                located_op.end_location.unwrap(),
-                                location.location,
-                            ),
+                            helpers::to_absolute(located_op.end(), location.location),
                         ));
                     }
                 } else {

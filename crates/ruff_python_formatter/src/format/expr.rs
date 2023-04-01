@@ -110,8 +110,7 @@ fn format_tuple(
                         [soft_block_indent(&format_with(|f| {
                             let magic_trailing_comma =
                                 expr.trivia.iter().any(|c| c.kind.is_magic_trailing_comma());
-                            let is_unbroken =
-                                expr.location.row() == expr.end_location.unwrap().row();
+                            let is_unbroken = expr.location.row() == expr.end().row();
                             if magic_trailing_comma {
                                 write!(f, [expand_parent()])?;
                             }
@@ -132,7 +131,7 @@ fn format_tuple(
                 } else {
                     let magic_trailing_comma =
                         expr.trivia.iter().any(|c| c.kind.is_magic_trailing_comma());
-                    let is_unbroken = expr.location.row() == expr.end_location.unwrap().row();
+                    let is_unbroken = expr.location.row() == expr.end().row();
                     if magic_trailing_comma {
                         write!(f, [expand_parent()])?;
                     }

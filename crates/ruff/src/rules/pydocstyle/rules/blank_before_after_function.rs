@@ -96,10 +96,9 @@ pub fn blank_before_after_function(checker: &mut Checker, docstring: &Docstring)
         .rules
         .enabled(Rule::NoBlankLineAfterFunction)
     {
-        let after = checker.locator.slice(Range::new(
-            docstring.expr.end_location.unwrap(),
-            parent.end_location.unwrap(),
-        ));
+        let after = checker
+            .locator
+            .slice(Range::new(docstring.expr.end(), parent.end()));
 
         // If the docstring is only followed by blank and commented lines, abort.
         let all_blank_after = after
@@ -138,11 +137,8 @@ pub fn blank_before_after_function(checker: &mut Checker, docstring: &Docstring)
             if checker.patch(diagnostic.kind.rule()) {
                 // Delete the blank line after the docstring.
                 diagnostic.set_fix(Edit::deletion(
-                    Location::new(docstring.expr.end_location.unwrap().row() + 1, 0),
-                    Location::new(
-                        docstring.expr.end_location.unwrap().row() + 1 + blank_lines_after,
-                        0,
-                    ),
+                    Location::new(docstring.expr.end().row() + 1, 0),
+                    Location::new(docstring.expr.end().row() + 1 + blank_lines_after, 0),
                 ));
             }
             checker.diagnostics.push(diagnostic);

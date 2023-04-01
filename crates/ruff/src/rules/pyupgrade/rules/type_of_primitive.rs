@@ -50,7 +50,7 @@ pub fn type_of_primitive(checker: &mut Checker, expr: &Expr, func: &Expr, args: 
         diagnostic.set_fix(Edit::replacement(
             primitive.builtin(),
             expr.location,
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);

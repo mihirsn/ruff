@@ -23,7 +23,7 @@ pub(crate) fn fix_multiple_with_statements(
     // Extract the module text.
     let contents = locator.slice(Range::new(
         Location::new(stmt.location.row(), 0),
-        Location::new(stmt.end_location.unwrap().row() + 1, 0),
+        Location::new(stmt.end().row() + 1, 0),
     ));
 
     // If the block is indented, "embed" it in a function definition, to preserve
@@ -98,6 +98,6 @@ pub(crate) fn fix_multiple_with_statements(
     Ok(Edit::replacement(
         contents,
         Location::new(stmt.location.row(), 0),
-        Location::new(stmt.end_location.unwrap().row() + 1, 0),
+        Location::new(stmt.end().row() + 1, 0),
     ))
 }

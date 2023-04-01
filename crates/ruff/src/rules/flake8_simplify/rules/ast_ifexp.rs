@@ -104,7 +104,7 @@ pub fn explicit_true_false_in_ifexpr(
             diagnostic.set_fix(Edit::replacement(
                 unparse_expr(&test.clone(), checker.stylist),
                 expr.location,
-                expr.end_location.unwrap(),
+                expr.end(),
             ));
         } else if checker.ctx.is_builtin("bool") {
             diagnostic.set_fix(Edit::replacement(
@@ -120,7 +120,7 @@ pub fn explicit_true_false_in_ifexpr(
                     checker.stylist,
                 ),
                 expr.location,
-                expr.end_location.unwrap(),
+                expr.end(),
             ));
         };
     }
@@ -164,7 +164,7 @@ pub fn explicit_false_true_in_ifexpr(
                 checker.stylist,
             ),
             expr.location,
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);
@@ -214,7 +214,7 @@ pub fn twisted_arms_in_ifexpr(
                 checker.stylist,
             ),
             expr.location,
-            expr.end_location.unwrap(),
+            expr.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);

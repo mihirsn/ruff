@@ -179,7 +179,7 @@ pub fn unused_loop_control_variable(
                             diagnostic.set_fix(Edit::replacement(
                                 rename,
                                 expr.location,
-                                expr.end_location.unwrap(),
+                                expr.end(),
                             ));
                         }
                     }

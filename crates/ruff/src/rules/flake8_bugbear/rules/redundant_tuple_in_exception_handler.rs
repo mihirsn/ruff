@@ -51,7 +51,7 @@ pub fn redundant_tuple_in_exception_handler(checker: &mut Checker, handlers: &[E
             diagnostic.set_fix(Edit::replacement(
                 unparse_expr(elt, checker.stylist),
                 type_.location,
-                type_.end_location.unwrap(),
+                type_.end(),
             ));
         }
         checker.diagnostics.push(diagnostic);

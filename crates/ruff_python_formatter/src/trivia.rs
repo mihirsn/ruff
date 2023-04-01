@@ -69,20 +69,20 @@ impl Node<'_> {
 
     pub fn end_location(&self) -> Location {
         match self {
-            Node::Alias(node) => node.end_location.unwrap(),
-            Node::Arg(node) => node.end_location.unwrap(),
-            Node::Body(node) => node.end_location.unwrap(),
-            Node::BoolOp(node) => node.end_location.unwrap(),
-            Node::CmpOp(node) => node.end_location.unwrap(),
-            Node::Excepthandler(node) => node.end_location.unwrap(),
-            Node::Expr(node) => node.end_location.unwrap(),
-            Node::Keyword(node) => node.end_location.unwrap(),
+            Node::Alias(node) => node.end(),
+            Node::Arg(node) => node.end(),
+            Node::Body(node) => node.end(),
+            Node::BoolOp(node) => node.end(),
+            Node::CmpOp(node) => node.end(),
+            Node::Excepthandler(node) => node.end(),
+            Node::Expr(node) => node.end(),
+            Node::Keyword(node) => node.end(),
             Node::Mod(..) => unreachable!("Node::Mod cannot be a child node"),
-            Node::Operator(node) => node.end_location.unwrap(),
-            Node::Pattern(node) => node.end_location.unwrap(),
-            Node::SliceIndex(node) => node.end_location.unwrap(),
-            Node::Stmt(node) => node.end_location.unwrap(),
-            Node::UnaryOp(node) => node.end_location.unwrap(),
+            Node::Operator(node) => node.end(),
+            Node::Pattern(node) => node.end(),
+            Node::SliceIndex(node) => node.end(),
+            Node::Stmt(node) => node.end(),
+            Node::UnaryOp(node) => node.end(),
         }
     }
 }

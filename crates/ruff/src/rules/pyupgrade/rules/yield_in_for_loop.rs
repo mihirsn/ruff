@@ -179,7 +179,7 @@ pub fn yield_in_for_loop(checker: &mut Checker, stmt: &Stmt) {
                 diagnostic.set_fix(Edit::replacement(
                     contents,
                     item.stmt.location,
-                    item.stmt.end_location.unwrap(),
+                    item.stmt.end(),
                 ));
             }
             checker.diagnostics.push(diagnostic);

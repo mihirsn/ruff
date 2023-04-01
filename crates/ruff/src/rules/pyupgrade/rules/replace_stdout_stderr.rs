@@ -43,13 +43,13 @@ fn generate_fix(
         Edit::replacement(
             "capture_output=True".to_string(),
             first.location,
-            first.end_location.unwrap(),
+            first.end(),
         ),
         remove_argument(
             locator,
             func.location,
             second.location,
-            second.end_location.unwrap(),
+            second.end(),
             args,
             keywords,
             false,

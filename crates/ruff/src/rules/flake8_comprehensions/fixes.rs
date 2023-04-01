@@ -70,7 +70,7 @@ pub fn fix_unnecessary_generator_list(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -124,11 +124,7 @@ pub fn fix_unnecessary_generator_set(
         }
     }
 
-    Ok(Edit::replacement(
-        content,
-        expr.location,
-        expr.end_location.unwrap(),
-    ))
+    Ok(Edit::replacement(content, expr.location, expr.end()))
 }
 
 /// (C402) Convert `dict((x, x) for x in range(3))` to `{x: x for x in
@@ -198,11 +194,7 @@ pub fn fix_unnecessary_generator_dict(
         }
     }
 
-    Ok(Edit::replacement(
-        content,
-        expr.location,
-        expr.end_location.unwrap(),
-    ))
+    Ok(Edit::replacement(content, expr.location, expr.end()))
 }
 
 /// (C403) Convert `set([x for x in y])` to `{x for x in y}`.
@@ -246,7 +238,7 @@ pub fn fix_unnecessary_list_comprehension_set(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -302,7 +294,7 @@ pub fn fix_unnecessary_list_comprehension_dict(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -396,7 +388,7 @@ pub fn fix_unnecessary_literal_set(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -469,7 +461,7 @@ pub fn fix_unnecessary_literal_dict(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -585,7 +577,7 @@ pub fn fix_unnecessary_collection_call(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -644,7 +636,7 @@ pub fn fix_unnecessary_literal_within_tuple_call(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -705,7 +697,7 @@ pub fn fix_unnecessary_literal_within_list_call(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -734,7 +726,7 @@ pub fn fix_unnecessary_list_call(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -863,7 +855,7 @@ pub fn fix_unnecessary_call_around_sorted(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -902,7 +894,7 @@ pub fn fix_unnecessary_double_cast_or_process(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -998,7 +990,7 @@ pub fn fix_unnecessary_comprehension(
     Ok(Edit::replacement(
         state.to_string(),
         expr.location,
-        expr.end_location.unwrap(),
+        expr.end(),
     ))
 }
 
@@ -1162,11 +1154,7 @@ pub fn fix_unnecessary_map(
             }
         }
 
-        Ok(Edit::replacement(
-            content,
-            expr.location,
-            expr.end_location.unwrap(),
-        ))
+        Ok(Edit::replacement(content, expr.location, expr.end()))
     } else {
         bail!("Should have two arguments");
     }

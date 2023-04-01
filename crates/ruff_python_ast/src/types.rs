@@ -8,6 +8,7 @@ pub enum Node<'a> {
     Expr(&'a Expr),
 }
 
+// TODO replace with `TextRange`
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Range {
     pub location: Location,
@@ -25,13 +26,13 @@ impl Range {
 
 impl<T> From<&Located<T>> for Range {
     fn from(located: &Located<T>) -> Self {
-        Range::new(located.location, located.end_location.unwrap())
+        Range::new(located.location, located.end())
     }
 }
 
 impl<T> From<&Box<Located<T>>> for Range {
     fn from(located: &Box<Located<T>>) -> Self {
-        Range::new(located.location, located.end_location.unwrap())
+        Range::new(located.location, located.end())
     }
 }
 

@@ -94,7 +94,7 @@ fn key_in_dict(checker: &mut Checker, left: &Expr, right: &Expr, range: Range) {
         diagnostic.set_fix(Edit::replacement(
             value_content,
             right.location,
-            right.end_location.unwrap(),
+            right.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);
@@ -106,7 +106,7 @@ pub fn key_in_dict_for(checker: &mut Checker, target: &Expr, iter: &Expr) {
         checker,
         target,
         iter,
-        Range::new(target.location, iter.end_location.unwrap()),
+        Range::new(target.location, iter.end()),
     );
 }
 

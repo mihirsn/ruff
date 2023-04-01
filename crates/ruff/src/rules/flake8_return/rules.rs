@@ -144,7 +144,7 @@ fn unnecessary_return_none(checker: &mut Checker, stack: &Stack) {
             diagnostic.set_fix(Edit::replacement(
                 "return".to_string(),
                 stmt.location,
-                stmt.end_location.unwrap(),
+                stmt.end(),
             ));
         }
         checker.diagnostics.push(diagnostic);
@@ -162,7 +162,7 @@ fn implicit_return_value(checker: &mut Checker, stack: &Stack) {
             diagnostic.set_fix(Edit::replacement(
                 "return None".to_string(),
                 stmt.location,
-                stmt.end_location.unwrap(),
+                stmt.end(),
             ));
         }
         checker.diagnostics.push(diagnostic);

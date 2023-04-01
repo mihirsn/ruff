@@ -60,7 +60,7 @@ pub fn manual_from_import(checker: &mut Checker, stmt: &Stmt, alias: &Alias, nam
                     module: Some(module.to_string()),
                     names: vec![Located::new(
                         stmt.location,
-                        stmt.end_location.unwrap(),
+                        stmt.end(),
                         AliasData {
                             name: asname.into(),
                             asname: None,
@@ -71,7 +71,7 @@ pub fn manual_from_import(checker: &mut Checker, stmt: &Stmt, alias: &Alias, nam
                 checker.stylist,
             ),
             stmt.location,
-            stmt.end_location.unwrap(),
+            stmt.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);

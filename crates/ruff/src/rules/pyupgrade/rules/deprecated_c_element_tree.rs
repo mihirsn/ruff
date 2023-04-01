@@ -28,7 +28,7 @@ fn add_check_for_node<T>(checker: &mut Checker, node: &Located<T>) {
         diagnostic.set_fix(Edit::replacement(
             contents.replacen("cElementTree", "ElementTree", 1),
             node.location,
-            node.end_location.unwrap(),
+            node.end(),
         ));
     }
     checker.diagnostics.push(diagnostic);

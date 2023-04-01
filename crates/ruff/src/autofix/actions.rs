@@ -103,7 +103,7 @@ fn is_lone_child(child: &Stmt, parent: &Stmt, deleted: &[&Stmt]) -> Result<bool>
 /// Return the location of a trailing semicolon following a `Stmt`, if it's part
 /// of a multi-statement line.
 fn trailing_semicolon(stmt: &Stmt, locator: &Locator) -> Option<Location> {
-    let contents = locator.after(stmt.end_location.unwrap());
+    let contents = locator.after(stmt.end());
     for (row, line) in NewlineWithTrailingNewline::from(contents).enumerate() {
         let trimmed = line.trim();
         if trimmed.starts_with(';') {
@@ -111,10 +111,7 @@ fn trailing_semicolon(stmt: &Stmt, locator: &Locator) -> Option<Location> {
                 .char_indices()
                 .find_map(|(column, char)| if char == ';' { Some(column) } else { None })
                 .unwrap();
-            return Some(to_absolute(
-                Location::new(row + 1, column),
-                stmt.end_location.unwrap(),
-            ));
+            return Some(to_absolute(Location::new(row + 1, column), stmt.end()));
         }
         if !trimmed.starts_with('\\') {
             break;
@@ -158,7 +155,7 @@ fn next_stmt_break(semicolon: Location, locator: &Locator) -> Location {
 
 /// Return `true` if a `Stmt` occurs at the end of a file.
 fn is_end_of_file(stmt: &Stmt, locator: &Locator) -> bool {
-    let contents = locator.after(stmt.end_location.unwrap());
+    let contents = locator.after(stmt.end());
     contents.is_empty()
 }
 
@@ -193,29 +190,25 @@ pub fn delete_stmt(
         Ok(Edit::replacement(
             "pass".to_string(),
             stmt.location,
-            stmt.end_location.unwrap(),
+            stmt.end(),
         ))
     } else {
         Ok(if let Some(semicolon) = trailing_semicolon(stmt, locator) {
             let next = next_stmt_break(semicolon, locator);
             Edit::deletion(stmt.location, next)
         } else if helpers::match_leading_content(stmt, locator) {
-            Edit::deletion(stmt.location, stmt.end_location.unwrap())
+            Edit::deletion(stmt.location, stmt.end())
         } else if helpers::preceded_by_continuation(stmt, indexer) {
             if is_end_of_file(stmt, locator) && stmt.location.column() == 0 {
                 // Special-case: a file can't end in a continuation.
-                Edit::replacement(
-                    stylist.line_ending().to_string(),
-                    stmt.location,
-                    stmt.end_location.unwrap(),
-                )
+                Edit::replacement(stylist.line_ending().to_string(), stmt.location, stmt.end())
             } else {
-                Edit::deletion(stmt.location, stmt.end_location.unwrap())
+                Edit::deletion(stmt.location, stmt.end())
             }
         } else {
             Edit::deletion(
                 Location::new(stmt.location.row(), 0),
-                Location::new(stmt.end_location.unwrap().row() + 1, 0),
+                Location::new(stmt.end().row() + 1, 0),
             )
         })
     }
@@ -340,7 +333,7 @@ pub fn remove_unused_imports<'a>(
         Ok(Edit::replacement(
             state.to_string(),
             stmt.location,
-            stmt.end_location.unwrap(),
+            stmt.end(),
         ))
     }
 }
@@ -485,7 +478,7 @@ pub fn get_or_import_symbol(
         let import_edit = Edit::replacement(
             locator.slice(source).to_string(),
             source.location,
-            source.end_location.unwrap(),
+            source.end(),
         );
         Ok((import_edit, binding))
     } else {

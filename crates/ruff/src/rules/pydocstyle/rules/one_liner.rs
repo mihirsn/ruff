@@ -52,7 +52,7 @@ pub fn one_liner(checker: &mut Checker, docstring: &Docstring) {
                     diagnostic.set_fix(Edit::replacement(
                         format!("{leading}{trimmed}{trailing}"),
                         docstring.expr.location,
-                        docstring.expr.end_location.unwrap(),
+                        docstring.expr.end(),
                     ));
                 }
             }

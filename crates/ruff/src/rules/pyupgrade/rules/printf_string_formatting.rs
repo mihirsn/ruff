@@ -141,7 +141,7 @@ fn clean_params_tuple(checker: &mut Checker, right: &Expr) -> String {
     let mut contents = checker.locator.slice(right).to_string();
     if let ExprKind::Tuple { elts, .. } = &right.node {
         if elts.len() == 1 {
-            if right.location.row() == right.end_location.unwrap().row() {
+            if right.location.row() == right.end().row() {
                 for (i, character) in contents.chars().rev().enumerate() {
                     if character == ',' {
                         let correct_index = contents.len() - i - 1;
@@ -158,7 +158,7 @@ fn clean_params_tuple(checker: &mut Checker, right: &Expr) -> String {
 /// Converts a dictionary to a function call while preserving as much styling as
 /// possible.
 fn clean_params_dictionary(checker: &mut Checker, right: &Expr) -> Option<String> {
-    let is_multi_line = right.location.row() < right.end_location.unwrap().row();
+    let is_multi_line = right.location.row() < right.end().row();
     let mut contents = String::new();
     if let ExprKind::Dict { keys, values } = &right.node {
         let mut arguments: Vec<String> = vec![];
@@ -303,7 +303,7 @@ pub(crate) fn printf_string_formatting(
     right: &Expr,
 ) {
     // If the modulo symbol is on a separate line, abort.
-    if right.location.row() != left.end_location.unwrap().row() {
+    if right.location.row() != left.end().row() {
         return;
     }
 
@@ -432,11 +432,7 @@ pub(crate) fn printf_string_formatting(
 
     let mut diagnostic = Diagnostic::new(PrintfStringFormatting, Range::from(expr));
     if checker.patch(diagnostic.kind.rule()) {
-        diagnostic.set_fix(Edit::replacement(
-            contents,
-            expr.location,
-            expr.end_location.unwrap(),
-        ));
+        diagnostic.set_fix(Edit::replacement(contents, expr.location, expr.end()));
     }
     checker.diagnostics.push(diagnostic);
 }

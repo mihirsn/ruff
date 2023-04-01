@@ -122,10 +122,9 @@ pub fn blank_before_after_class(checker: &mut Checker, docstring: &Docstring) {
     }
 
     if checker.settings.rules.enabled(Rule::OneBlankLineAfterClass) {
-        let after = checker.locator.slice(Range::new(
-            docstring.expr.end_location.unwrap(),
-            parent.end_location.unwrap(),
-        ));
+        let after = checker
+            .locator
+            .slice(Range::new(docstring.expr.end(), parent.end()));
 
         let all_blank_after = after
             .universal_newlines()
@@ -151,11 +150,8 @@ pub fn blank_before_after_class(checker: &mut Checker, docstring: &Docstring) {
                 // Insert a blank line before the class (replacing any existing lines).
                 diagnostic.set_fix(Edit::replacement(
                     checker.stylist.line_ending().to_string(),
-                    Location::new(docstring.expr.end_location.unwrap().row() + 1, 0),
-                    Location::new(
-                        docstring.expr.end_location.unwrap().row() + 1 + blank_lines_after,
-                        0,
-                    ),
+                    Location::new(docstring.expr.end().row() + 1, 0),
+                    Location::new(docstring.expr.end().row() + 1 + blank_lines_after, 0),
                 ));
             }
             checker.diagnostics.push(diagnostic);
