@@ -5083,7 +5083,7 @@ impl<'a> Checker<'a> {
                             self.stylist,
                         ) {
                             Ok(fix) => {
-                                if fix.content.is_empty() || fix.content == "pass" {
+                                if fix.is_deletion() || fix.content() == Some("pass") {
                                     self.deletions.insert(*defined_by);
                                 }
                                 Some(fix)
