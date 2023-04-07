@@ -1,61 +1,56 @@
 ---
 source: crates/ruff/src/rules/flake8_simplify/mod.rs
-expression: diagnostics
 ---
-- kind:
-    name: SuppressibleException
-    body: "Use `contextlib.suppress(ValueError)` instead of try-except-pass"
-    suggestion: ~
-    fixable: false
-  location:
-    row: 4
-    column: 0
-  end_location:
-    row: 7
-    column: 8
-  fix:
-    edits: []
-  parent: ~
-- kind:
-    name: SuppressibleException
-    body: "Use `contextlib.suppress(ValueError, OSError)` instead of try-except-pass"
-    suggestion: ~
-    fixable: false
-  location:
-    row: 9
-    column: 0
-  end_location:
-    row: 12
-    column: 8
-  fix:
-    edits: []
-  parent: ~
-- kind:
-    name: SuppressibleException
-    body: "Use `contextlib.suppress(Exception)` instead of try-except-pass"
-    suggestion: ~
-    fixable: false
-  location:
-    row: 14
-    column: 0
-  end_location:
-    row: 17
-    column: 8
-  fix:
-    edits: []
-  parent: ~
-- kind:
-    name: SuppressibleException
-    body: "Use `contextlib.suppress(a.Error, b.Error)` instead of try-except-pass"
-    suggestion: ~
-    fixable: false
-  location:
-    row: 19
-    column: 0
-  end_location:
-    row: 22
-    column: 8
-  fix:
-    edits: []
-  parent: ~
+SIM105.py:4:1: SIM105 Use `contextlib.suppress(ValueError)` instead of try-except-pass
+   |
+ 4 |       pass
+ 5 |   
+ 6 | / try:
+ 7 | |     foo()
+ 8 | | except ValueError:  # SIM105
+ 9 | |     pass
+   | |________^ SIM105
+10 |   
+11 |   try:
+   |
+
+SIM105.py:9:1: SIM105 Use `contextlib.suppress(ValueError, OSError)` instead of try-except-pass
+   |
+ 9 |       pass
+10 |   
+11 | / try:
+12 | |     foo()
+13 | | except (ValueError, OSError):  # SIM105
+14 | |     pass
+   | |________^ SIM105
+15 |   
+16 |   try:
+   |
+
+SIM105.py:14:1: SIM105 Use `contextlib.suppress(Exception)` instead of try-except-pass
+   |
+14 |       pass
+15 |   
+16 | / try:
+17 | |     foo()
+18 | | except:  # SIM105
+19 | |     pass
+   | |________^ SIM105
+20 |   
+21 |   try:
+   |
+
+SIM105.py:19:1: SIM105 Use `contextlib.suppress(a.Error, b.Error)` instead of try-except-pass
+   |
+19 |       pass
+20 |   
+21 | / try:
+22 | |     foo()
+23 | | except (a.Error, b.Error):  # SIM105
+24 | |     pass
+   | |________^ SIM105
+25 |   
+26 |   try:
+   |
+
 
