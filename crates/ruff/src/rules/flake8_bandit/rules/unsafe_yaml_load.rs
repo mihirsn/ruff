@@ -55,13 +55,13 @@ pub fn unsafe_yaml_load(checker: &mut Checker, func: &Expr, args: &[Expr], keywo
                 };
                 checker.diagnostics.push(Diagnostic::new(
                     UnsafeYAMLLoad { loader },
-                    Range::from(loader_arg),
+                    loader_arg.range(),
                 ));
             }
         } else {
             checker.diagnostics.push(Diagnostic::new(
                 UnsafeYAMLLoad { loader: None },
-                Range::from(func),
+                func.range(),
             ));
         }
     }

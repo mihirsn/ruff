@@ -63,7 +63,7 @@ pub fn native_literals(
                 LiteralType::Str
             } else {
                 LiteralType::Bytes
-            }}, Range::from(expr));
+            }}, expr.range());
             if checker.patch(diagnostic.kind.rule()) {
                 diagnostic.set_fix(Edit::replacement(
                     if id == "bytes" {
@@ -126,7 +126,7 @@ pub fn native_literals(
                     LiteralType::Bytes
                 },
             },
-            Range::from(expr),
+            expr.range(),
         );
         if checker.patch(diagnostic.kind.rule()) {
             diagnostic.set_fix(Edit::replacement(

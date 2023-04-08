@@ -120,11 +120,11 @@ impl<'a> EmitterContext<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::message::{Emitter, EmitterContext, Location, Message};
+    use crate::message::{Emitter, EmitterContext, Message};
     use crate::rules::pyflakes::rules::{UndefinedName, UnusedImport, UnusedVariable};
     use ruff_diagnostics::{Diagnostic, Edit, Fix};
     use ruff_python_ast::source_code::SourceFileBuilder;
-    use ruff_python_ast::types::Range;
+    use ruff_text_size::{TextRange, TextSize};
     use rustc_hash::FxHashMap;
 
     pub(super) fn create_messages() -> Vec<Message> {
@@ -148,7 +148,7 @@ def fibonacci(n):
                 context: None,
                 multiple: false,
             },
-            Range::new(Location::new(1, 7), Location::new(1, 9)),
+            TextRange::new(TextSize::from(7), TextSize::from(9)),
         );
 
         let fib_source = SourceFileBuilder::new("fib.py").source_text(fib).finish();
@@ -157,11 +157,11 @@ def fibonacci(n):
             UnusedVariable {
                 name: "x".to_string(),
             },
-            Range::new(Location::new(6, 4), Location::new(6, 5)),
+            TextRange::new(TextSize::from(94), TextSize::from(95)),
         )
         .with_fix(Fix::new(vec![Edit::deletion(
-            Location::new(6, 4),
-            Location::new(6, 9),
+            TextSize::from(94),
+            TextSize::from(95),
         )]));
 
         let file_2 = r#"if a == 1: pass"#;
@@ -170,7 +170,7 @@ def fibonacci(n):
             UndefinedName {
                 name: "a".to_string(),
             },
-            Range::new(Location::new(1, 3), Location::new(1, 4)),
+            TextRange::new(TextSize::from(3), TextSize::from(4)),
         );
 
         let file_2_source = SourceFileBuilder::new("undef.py")

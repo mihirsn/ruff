@@ -102,7 +102,7 @@ pub fn unrecognized_platform(
     };
 
     let diagnostic_unrecognized_platform_check =
-        Diagnostic::new(UnrecognizedPlatformCheck, Range::from(expr));
+        Diagnostic::new(UnrecognizedPlatformCheck, expr.range());
     if !checker
         .ctx
         .resolve_call_path(left)
@@ -143,7 +143,7 @@ pub fn unrecognized_platform(
                     UnrecognizedPlatformName {
                         platform: value.clone(),
                     },
-                    Range::from(right),
+                    right.range(),
                 ));
             }
         }

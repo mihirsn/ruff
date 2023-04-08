@@ -1,72 +1,209 @@
 //! Struct used to efficiently slice source code at (row, column) Locations.
 
-use crate::source_code::line_index::LineIndex;
-use crate::source_code::SourceCode;
-use once_cell::unsync::OnceCell;
-use ruff_text_size::TextSize;
-use rustpython_parser::ast::Location;
+use ruff_text_size::{TextLen, TextRange, TextSize};
+use std::ops::Add;
 
 use crate::types::Range;
 
 pub struct Locator<'a> {
     contents: &'a str,
-    line_index: OnceCell<LineIndex>,
 }
 
 impl<'a> Locator<'a> {
     pub const fn new(contents: &'a str) -> Self {
-        Self {
-            contents,
-            line_index: OnceCell::new(),
+        Self { contents }
+    }
+
+    /// Computes the start position of the line of `offset`.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use ruff_text_size::TextSize;
+    /// # use ruff_python_ast::source_code::Locator;
+    ///
+    /// let locator = Locator::new("First line\nsecond line\rthird line");
+    ///
+    /// assert_eq!(locator.line_start(TextSize::from(0)), TextSize::from(0));
+    /// assert_eq!(locator.line_start(TextSize::from(4)), TextSize::from(0));
+    ///
+    /// assert_eq!(locator.line_start(TextSize::from(14)), TextSize::from(11));
+    /// assert_eq!(locator.line_start(TextSize::from(28)), TextSize::from(23));
+    /// ```
+    ///
+    /// ## Panics
+    /// If `offset` is out of bounds.
+    pub fn line_start(&self, offset: TextSize) -> TextSize {
+        if let Some(index) = self.contents[TextRange::up_to(offset)].rfind(['\n', '\r']) {
+            // SAFETY: Safe because `index < offset`
+            TextSize::try_from(index).unwrap().add(TextSize::from(1))
+        } else {
+            TextSize::default()
         }
     }
 
-    fn get_or_init_index(&self) -> &LineIndex {
-        self.line_index
-            .get_or_init(|| LineIndex::from_source_text(self.contents))
-    }
+    /// Computes the offset that is right after the newline character that ends `offset`'s line.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use ruff_text_size::{TextRange, TextSize};
+    /// # use ruff_python_ast::source_code::Locator;
+    ///
+    /// let locator = Locator::new("First line\nsecond line\r\nthird line");
+    ///
+    /// assert_eq!(locator.line_end(TextSize::from(3)), TextSize::from(11));
+    /// assert_eq!(locator.line_end(TextSize::from(14)), TextSize::from(24));
+    /// assert_eq!(locator.line_end(TextSize::from(28)), TextSize::from(34));
+    /// ```
+    ///
+    /// ## Panics
+    ///
+    /// If `offset` is passed the end of the content.
+    pub fn line_end(&self, offset: TextSize) -> TextSize {
+        let slice = &self.contents[usize::from(offset)..];
+        if let Some(index) = slice.find(['\n', '\r']) {
+            let bytes = slice.as_bytes();
 
-    #[inline]
-    pub fn to_source_code(&self) -> SourceCode<'a, '_> {
-        SourceCode {
-            index: self.get_or_init_index(),
-            text: self.contents,
+            // `\r\n`
+            let relative_offset = if bytes[index] == b'\r' && bytes.get(index + 1) == Some(&b'\n') {
+                TextSize::try_from(index + 2).unwrap()
+            }
+            // `\r` or `\n`
+            else {
+                TextSize::try_from(index + 1).unwrap()
+            };
+
+            offset.add(relative_offset)
+        } else {
+            self.contents.text_len()
         }
     }
 
+    /// Computes the range of this `offset`s line.
+    ///
+    /// The range starts at the beginning of the line and goes up to, and including, the new line character
+    /// at the end of the line.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use ruff_text_size::{TextRange, TextSize};
+    /// # use ruff_python_ast::source_code::Locator;
+    ///
+    /// let locator = Locator::new("First line\nsecond line\r\nthird line");
+    ///
+    /// assert_eq!(locator.line_range(TextSize::from(3)), TextRange::new(TextSize::from(0), TextSize::from(11)));
+    /// assert_eq!(locator.line_range(TextSize::from(14)), TextRange::new(TextSize::from(11), TextSize::from(24)));
+    /// assert_eq!(locator.line_range(TextSize::from(28)), TextRange::new(TextSize::from(24), TextSize::from(34)));
+    /// ```
+    ///
+    /// ## Panics
+    /// If `offset` is out of bounds.
+    pub fn line_range(&self, offset: TextSize) -> TextRange {
+        TextRange::new(self.line_start(offset), self.line_end(offset))
+    }
+
+    /// Returns the text of the `offset`'s line.
+    ///
+    /// The line includes the newline characters at the end of the line.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use ruff_text_size::{TextRange, TextSize};
+    /// # use ruff_python_ast::source_code::Locator;
+    ///
+    /// let locator = Locator::new("First line\nsecond line\r\nthird line");
+    ///
+    /// assert_eq!(locator.line(TextSize::from(3)), "First line\n");
+    /// assert_eq!(locator.line(TextSize::from(14)), "second line\r\n");
+    /// assert_eq!(locator.line(TextSize::from(28)), "third line");
+    /// ```
+    ///
+    /// ## Panics
+    /// If `offset` is out of bounds.
+    pub fn line(&self, offset: TextSize) -> &'a str {
+        &self.contents[self.line_range(offset)]
+    }
+
+    /// Computes the range of all lines that this `range` covers.
+    ///
+    /// The range starts at the beginning of the line at `range.start()` and goes up to, and including, the new line character
+    /// at the end of `range.ends()`'s line.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use ruff_text_size::{TextRange, TextSize};
+    /// # use ruff_python_ast::source_code::Locator;
+    ///
+    /// let locator = Locator::new("First line\nsecond line\r\nthird line");
+    ///
+    /// assert_eq!(
+    ///     locator.lines_range(TextRange::new(TextSize::from(3), TextSize::from(5))),
+    ///     TextRange::new(TextSize::from(0), TextSize::from(11))
+    /// );
+    /// assert_eq!(
+    ///     locator.lines_range(TextRange::new(TextSize::from(3), TextSize::from(14))),
+    ///     TextRange::new(TextSize::from(0), TextSize::from(24))
+    /// );
+    /// ```
+    ///
+    /// ## Panics
+    /// If the start or end of `range` is out of bounds.
+    pub fn lines_range(&self, range: TextRange) -> TextRange {
+        TextRange::new(self.line_start(range.start()), self.line_end(range.end()))
+    }
+
+    /// Returns the text of all lines that include `range`.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use ruff_text_size::{TextRange, TextSize};
+    /// # use ruff_python_ast::source_code::Locator;
+    ///
+    /// let locator = Locator::new("First line\nsecond line\r\nthird line");
+    ///
+    /// assert_eq!(
+    ///     locator.lines(TextRange::new(TextSize::from(3), TextSize::from(5))),
+    ///     "First line\n"
+    /// );
+    /// assert_eq!(
+    ///     locator.lines(TextRange::new(TextSize::from(3), TextSize::from(14))),
+    ///     "First line\nsecond line\r\n"
+    /// );
+    /// ```
+    ///
+    /// ## Panics
+    /// If the start or end of `range` is out of bounds.
+    pub fn lines(&self, range: TextRange) -> &'a str {
+        &self.contents[self.lines_range(range)]
+    }
+
+    // TODO remove
     /// Take the source code up to the given [`Location`].
     #[inline]
-    pub fn up_to(&self, location: Location) -> &'a str {
-        self.to_source_code().up_to(location)
+    pub fn up_to(&self, offset: TextSize) -> &'a str {
+        &self.contents[TextRange::up_to(offset)]
     }
 
     /// Take the source code after the given [`Location`].
     #[inline]
-    pub fn after(&self, location: Location) -> &'a str {
-        self.to_source_code().after(location)
+    pub fn after(&self, offset: TextSize) -> &'a str {
+        &self.contents[usize::from(offset)..]
     }
 
     /// Take the source code between the given [`Range`].
     #[inline]
     pub fn slice<R: Into<Range>>(&self, range: R) -> &'a str {
-        self.to_source_code().slice(range)
-    }
-
-    /// Return the byte offset of the given [`Location`].
-    #[inline]
-    pub fn offset(&self, location: Location) -> TextSize {
-        self.to_source_code().offset(location)
+        &self.contents[range.into().range]
     }
 
     /// Return the underlying source code.
     pub fn contents(&self) -> &'a str {
         self.contents
-    }
-
-    /// Return the number of lines in the source code.
-    pub fn count_lines(&self) -> usize {
-        let index = self.get_or_init_index();
-        index.line_count()
     }
 
     /// Return the number of bytes in the source code.

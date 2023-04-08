@@ -25,7 +25,7 @@ pub fn import(import_from: &Stmt, name: &str, asname: Option<&str>) -> Option<Di
             if alias != name {
                 return Some(Diagnostic::new(
                     PytestIncorrectPytestImport,
-                    Range::from(import_from),
+                    import_from.range(),
                 ));
             }
         }
@@ -50,7 +50,7 @@ pub fn import_from(
         if is_pytest_or_subpackage(module) {
             return Some(Diagnostic::new(
                 PytestIncorrectPytestImport,
-                Range::from(import_from),
+                import_from.range(),
             ));
         }
     };

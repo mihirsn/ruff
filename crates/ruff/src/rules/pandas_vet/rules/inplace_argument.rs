@@ -82,7 +82,7 @@ pub fn inplace_argument(
                     && matches!(checker.ctx.current_stmt().node, StmtKind::Expr { .. })
                     && checker.ctx.current_expr_parent().is_none();
                 let mut diagnostic =
-                    Diagnostic::new(PandasUseOfInplaceArgument { fixable }, Range::from(keyword));
+                    Diagnostic::new(PandasUseOfInplaceArgument { fixable }, keyword.ragne());
                 if fixable && checker.patch(diagnostic.kind.rule()) {
                     if let Some(fix) = convert_inplace_argument_to_assignment(
                         checker.locator,

@@ -4,7 +4,7 @@ use itertools::Itertools;
 use log::error;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use ruff_text_size::{TextLen, TextSize};
+use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustpython_parser::ast::{
     Arguments, Cmpop, Constant, Excepthandler, ExcepthandlerKind, Expr, ExprKind, Keyword,
@@ -14,6 +14,7 @@ use rustpython_parser::{lexer, Mode, Tok};
 use smallvec::SmallVec;
 
 use crate::call_path::CallPath;
+use crate::newlines::StrExt;
 use crate::source_code::{Generator, Indexer, Locator, Stylist};
 use crate::types::Range;
 use crate::visitor;
@@ -21,12 +22,12 @@ use crate::visitor::Visitor;
 
 /// Create an `Expr` with default location from an `ExprKind`.
 pub fn create_expr(node: ExprKind) -> Expr {
-    Expr::new(Location::default(), Some(Location::default()), node)
+    Expr::with_range(node, TextRange::default())
 }
 
 /// Create a `Stmt` with a default location from a `StmtKind`.
 pub fn create_stmt(node: StmtKind) -> Stmt {
-    Stmt::new(Location::default(), Some(Location::default()), node)
+    Stmt::with_range(node, TextRange::default())
 }
 
 /// Generate source code from an [`Expr`].
@@ -612,29 +613,25 @@ pub fn map_callable(decorator: &Expr) -> &Expr {
 
 /// Returns `true` if a statement or expression includes at least one comment.
 pub fn has_comments<T>(located: &Located<T>, locator: &Locator) -> bool {
-    let start = if match_leading_content(located, locator) {
-        located.location
+    let start = if has_leading_content(located, locator) {
+        located.start()
     } else {
-        TextSize::default()
+        locator.line_start(located.start())
     };
-
-    let end = if match_trailing_content(located, locator) {
+    let end = if has_trailing_content(located, locator) {
         located.end()
     } else {
-        let end_offset = locator.contents()[usize::from(located.end())..]
-            .lines()
-            .next()
-            .unwrap()
-            .text_len();
-
-        located.end() + end_offset
+        locator.line_end(located.end())
     };
-    has_comments_in(Range::new(start, end), locator)
+
+    has_comments_in(TextRange::new(start, end), locator)
 }
 
 /// Returns `true` if a [`Range`] includes at least one comment.
-pub fn has_comments_in(range: Range, locator: &Locator) -> bool {
-    for tok in lexer::lex_located(locator.slice(range), Mode::Module, range.location) {
+pub fn has_comments_in(range: TextRange, locator: &Locator) -> bool {
+    let source = &locator.contents()[range];
+
+    for tok in lexer::lex_located(source, Mode::Module, range.start()) {
         match tok {
             Ok((_, tok, _)) => {
                 if matches!(tok, Tok::Comment(..)) {
@@ -765,7 +762,7 @@ where
 /// A [`Visitor`] that collects all `raise` statements in a function or method.
 #[derive(Default)]
 pub struct RaiseStatementVisitor<'a> {
-    pub raises: Vec<(Range, Option<&'a Expr>, Option<&'a Expr>)>,
+    pub raises: Vec<(TextRange, Option<&'a Expr>, Option<&'a Expr>)>,
 }
 
 impl<'a, 'b> Visitor<'b> for RaiseStatementVisitor<'b>
@@ -776,7 +773,7 @@ where
         match &stmt.node {
             StmtKind::Raise { exc, cause } => {
                 self.raises
-                    .push((Range::from(stmt), exc.as_deref(), cause.as_deref()));
+                    .push((stmt.range(), exc.as_deref(), cause.as_deref()));
             }
             StmtKind::ClassDef { .. }
             | StmtKind::FunctionDef { .. }
@@ -847,15 +844,18 @@ pub fn to_relative(absolute: Location, base: Location) -> Location {
 }
 
 /// Return `true` if a [`Located`] has leading content.
-pub fn match_leading_content<T>(located: &Located<T>, locator: &Locator) -> bool {
-    let prefix = &locator.contents()[..usize::from(located.location)];
-    prefix.chars().any(|char| !char.is_whitespace())
+pub fn has_leading_content<T>(located: &Located<T>, locator: &Locator) -> bool {
+    let line_start = locator.line_start(located.start());
+    let leading = &locator.contents()[TextRange::new(line_start, located.start())];
+    leading.chars().any(|char| !char.is_whitespace())
 }
 
 /// Return `true` if a [`Located`] has trailing content.
-pub fn match_trailing_content<T>(located: &Located<T>, locator: &Locator) -> bool {
-    let suffix = &locator.contents()[usize::from(located.end())..];
-    for char in suffix.chars() {
+pub fn has_trailing_content<T>(located: &Located<T>, locator: &Locator) -> bool {
+    let line_end = locator.line_end(located.end());
+    let trailing = &locator.contents()[TextRange::new(located.end(), line_end)];
+
+    for char in trailing.chars() {
         if char == '#' {
             return false;
         }
@@ -867,52 +867,64 @@ pub fn match_trailing_content<T>(located: &Located<T>, locator: &Locator) -> boo
 }
 
 /// If a [`Located`] has a trailing comment, return the index of the hash.
-pub fn match_trailing_comment<T>(located: &Located<T>, locator: &Locator) -> Option<usize> {
-    let range = Range::new(located.end(), Location::new(located.end().row() + 1, 0));
-    let suffix = locator.slice(range);
-    for (i, char) in suffix.chars().enumerate() {
+pub fn trailing_comment_start_offset<T>(
+    located: &Located<T>,
+    locator: &Locator,
+) -> Option<TextSize> {
+    let line_end = locator.line_end(located.end());
+
+    let trailing = &locator.contents()[TextRange::new(located.end(), line_end)];
+
+    for (i, char) in trailing.chars().enumerate() {
         if char == '#' {
-            return Some(i);
+            return TextSize::try_from(i).ok();
         }
         if !char.is_whitespace() {
             return None;
         }
     }
+
     None
 }
 
 /// Return the number of trailing empty lines following a statement.
 pub fn count_trailing_lines(stmt: &Stmt, locator: &Locator) -> usize {
-    let suffix = locator.after(Location::new(stmt.end().row() + 1, 0));
-    suffix
-        .lines()
+    let line_end = locator.line_end(stmt.end());
+    let rest = &locator.contents()[usize::from(line_end)..];
+    rest.universal_newlines()
         .take_while(|line| line.trim().is_empty())
         .count()
 }
 
 /// Return the range of the first parenthesis pair after a given [`Location`].
-pub fn match_parens(start: Location, locator: &Locator) -> Option<Range> {
-    let contents = locator.after(start);
+pub fn match_parens(start: Location, locator: &Locator) -> Option<TextRange> {
+    let contents = &locator.contents()[usize::from(start)..];
+
     let mut fix_start = None;
     let mut fix_end = None;
     let mut count: usize = 0;
+
     for (start, tok, end) in lexer::lex_located(contents, Mode::Module, start).flatten() {
-        if matches!(tok, Tok::Lpar) {
-            if count == 0 {
-                fix_start = Some(start);
+        match tok {
+            Tok::Lpar => {
+                if count == 0 {
+                    fix_start = Some(start);
+                }
+                count += 1;
             }
-            count += 1;
-        }
-        if matches!(tok, Tok::Rpar) {
-            count -= 1;
-            if count == 0 {
-                fix_end = Some(end);
-                break;
+            Tok::Rpar => {
+                count -= 1;
+                if count == 0 {
+                    fix_end = Some(end);
+                    break;
+                }
             }
+            _ => {}
         }
     }
+
     match (fix_start, fix_end) {
-        (Some(start), Some(end)) => Some(Range::new(start, end)),
+        (Some(start), Some(end)) => Some(TextRange::new(start, end)),
         _ => None,
     }
 }
@@ -920,182 +932,158 @@ pub fn match_parens(start: Location, locator: &Locator) -> Option<Range> {
 /// Return the appropriate visual `Range` for any message that spans a `Stmt`.
 /// Specifically, this method returns the range of a function or class name,
 /// rather than that of the entire function or class body.
-pub fn identifier_range(stmt: &Stmt, locator: &Locator) -> Range {
+pub fn identifier_range(stmt: &Stmt, locator: &Locator) -> TextRange {
     if matches!(
         stmt.node,
         StmtKind::ClassDef { .. }
             | StmtKind::FunctionDef { .. }
             | StmtKind::AsyncFunctionDef { .. }
     ) {
-        let contents = locator.slice(stmt);
-        for (start, tok, end) in lexer::lex_located(contents, Mode::Module, stmt.location).flatten()
+        let contents = &locator.contents()[stmt.range()];
+
+        for (start, tok, end) in lexer::lex_located(contents, Mode::Module, stmt.start()).flatten()
         {
             if matches!(tok, Tok::Name { .. }) {
-                return Range::new(start, end);
+                return TextRange::new(start, end);
             }
         }
         error!("Failed to find identifier for {:?}", stmt);
     }
-    Range::from(stmt)
+
+    stmt.range()
 }
 
 /// Return the ranges of [`Tok::Name`] tokens within a specified node.
 pub fn find_names<'a, T>(
     located: &'a Located<T>,
     locator: &'a Locator,
-) -> impl Iterator<Item = Range> + 'a {
+) -> impl Iterator<Item = TextRange> + 'a {
     let contents = locator.slice(located);
-    lexer::lex_located(contents, Mode::Module, located.location)
+
+    lexer::lex_located(contents, Mode::Module, located.start())
         .flatten()
         .filter(|(_, tok, _)| matches!(tok, Tok::Name { .. }))
-        .map(|(start, _, end)| Range {
-            location: start,
-            end_location: end,
-        })
+        .map(|(start, _, end)| TextRange::new(start, end))
 }
 
 /// Return the `Range` of `name` in `Excepthandler`.
-pub fn excepthandler_name_range(handler: &Excepthandler, locator: &Locator) -> Option<Range> {
+pub fn excepthandler_name_range(handler: &Excepthandler, locator: &Locator) -> Option<TextRange> {
     let ExcepthandlerKind::ExceptHandler {
         name, type_, body, ..
     } = &handler.node;
+
     match (name, type_) {
         (Some(_), Some(type_)) => {
-            let type_end_location = type_.end();
-            let contents = locator.slice(Range::new(type_end_location, body[0].location));
-            let range = lexer::lex_located(contents, Mode::Module, type_end_location)
+            let contents = &locator.contents()[TextRange::new(type_.end(), body[0].start())];
+
+            lexer::lex_located(contents, Mode::Module, type_.end())
                 .flatten()
                 .tuple_windows()
                 .find(|(tok, next_tok)| {
                     matches!(tok.1, Tok::As) && matches!(next_tok.1, Tok::Name { .. })
                 })
-                .map(|((..), (location, _, end_location))| Range::new(location, end_location));
-            range
+                .map(|((..), (location, _, end_location))| TextRange::new(location, end_location))
         }
         _ => None,
     }
 }
 
 /// Return the `Range` of `except` in `Excepthandler`.
-pub fn except_range(handler: &Excepthandler, locator: &Locator) -> Range {
+pub fn except_range(handler: &Excepthandler, locator: &Locator) -> TextRange {
     let ExcepthandlerKind::ExceptHandler { body, type_, .. } = &handler.node;
     let end = if let Some(type_) = type_ {
-        type_.location
+        type_.end()
     } else {
-        body.first()
-            .expect("Expected body to be non-empty")
-            .location
+        body.first().expect("Expected body to be non-empty").start()
     };
-    let contents = locator.slice(Range {
-        location: handler.location,
-        end_location: end,
-    });
-    let range = lexer::lex_located(contents, Mode::Module, handler.location)
+    let contents = &locator.contents()[TextRange::new(handler.start(), end)];
+
+    lexer::lex_located(contents, Mode::Module, handler.start())
         .flatten()
         .find(|(_, kind, _)| matches!(kind, Tok::Except { .. }))
-        .map(|(location, _, end_location)| Range {
-            location,
-            end_location,
-        })
-        .expect("Failed to find `except` range");
-    range
+        .map(|(start, _, end)| TextRange::new(start, end))
+        .expect("Failed to find `except` range")
 }
 
 /// Return the `Range` of `else` in `For`, `AsyncFor`, and `While` statements.
-pub fn else_range(stmt: &Stmt, locator: &Locator) -> Option<Range> {
+pub fn else_range(stmt: &Stmt, locator: &Locator) -> Option<TextRange> {
     match &stmt.node {
         StmtKind::For { body, orelse, .. }
         | StmtKind::AsyncFor { body, orelse, .. }
         | StmtKind::While { body, orelse, .. }
             if !orelse.is_empty() =>
         {
-            let body_end = body
-                .last()
-                .expect("Expected body to be non-empty")
-                .end_location
-                .unwrap();
-            let contents = locator.slice(Range {
-                location: body_end,
-                end_location: orelse
-                    .first()
-                    .expect("Expected orelse to be non-empty")
-                    .location,
-            });
-            let range = lexer::lex_located(contents, Mode::Module, body_end)
+            let body_end = body.last().expect("Expected body to be non-empty").end();
+            let or_else_start = orelse
+                .first()
+                .expect("Expected orelse to be non-empty")
+                .start();
+            let contents = &locator.contents()[TextRange::new(body_end, or_else_start)];
+
+            lexer::lex_located(contents, Mode::Module, body_end)
                 .flatten()
                 .find(|(_, kind, _)| matches!(kind, Tok::Else))
-                .map(|(location, _, end_location)| Range {
-                    location,
-                    end_location,
-                });
-            range
+                .map(|(start, _, end)| TextRange::new(start, end))
         }
         _ => None,
     }
 }
 
 /// Return the `Range` of the first `Tok::Colon` token in a `Range`.
-pub fn first_colon_range(range: Range, locator: &Locator) -> Option<Range> {
-    let contents = locator.slice(range);
-    let range = lexer::lex_located(contents, Mode::Module, range.location)
+pub fn first_colon_range(range: TextRange, locator: &Locator) -> Option<TextRange> {
+    let contents = &locator.contents()[range];
+    let range = lexer::lex_located(contents, Mode::Module, range.start())
         .flatten()
         .find(|(_, kind, _)| matches!(kind, Tok::Colon))
-        .map(|(location, _, end_location)| Range {
-            location,
-            end_location,
-        });
+        .map(|(start, _, end)| TextRange::new(start, end));
     range
 }
 
 /// Return the `Range` of the first `Elif` or `Else` token in an `If` statement.
-pub fn elif_else_range(stmt: &Stmt, locator: &Locator) -> Option<Range> {
+pub fn elif_else_range(stmt: &Stmt, locator: &Locator) -> Option<TextRange> {
     let StmtKind::If { body, orelse, .. } = &stmt.node else {
         return None;
     };
 
-    let start = body
-        .last()
-        .expect("Expected body to be non-empty")
-        .end_location
-        .unwrap();
+    let start = body.last().expect("Expected body to be non-empty").end();
+
     let end = match &orelse[..] {
         [Stmt {
             node: StmtKind::If { test, .. },
             ..
-        }] => test.location,
-        [stmt, ..] => stmt.location,
+        }] => test.start(),
+        [stmt, ..] => stmt.start(),
         _ => return None,
     };
-    let contents = locator.slice(Range::new(start, end));
-    let range = lexer::lex_located(contents, Mode::Module, start)
+
+    let contents = &locator.contents()[TextRange::new(start, end)];
+    lexer::lex_located(contents, Mode::Module, start)
         .flatten()
         .find(|(_, kind, _)| matches!(kind, Tok::Elif | Tok::Else))
-        .map(|(location, _, end_location)| Range {
-            location,
-            end_location,
-        });
-    range
+        .map(|(location, _, end_location)| TextRange::new(location, end_location))
 }
 
 /// Return `true` if a `Stmt` appears to be part of a multi-statement line, with
 /// other statements preceding it.
 pub fn preceded_by_continuation(stmt: &Stmt, indexer: &Indexer) -> bool {
-    stmt.location.row() > 1
-        && indexer
-            .continuation_lines()
-            .contains(&(stmt.location.row() - 1))
+    // FIXME
+    // stmt.location.row() > 1
+    //     && indexer
+    //         .continuation_lines()
+    //         .contains(&(stmt.location.row() - 1))
+    false
 }
 
 /// Return `true` if a `Stmt` appears to be part of a multi-statement line, with
 /// other statements preceding it.
 pub fn preceded_by_multi_statement_line(stmt: &Stmt, locator: &Locator, indexer: &Indexer) -> bool {
-    match_leading_content(stmt, locator) || preceded_by_continuation(stmt, indexer)
+    has_leading_content(stmt, locator) || preceded_by_continuation(stmt, indexer)
 }
 
 /// Return `true` if a `Stmt` appears to be part of a multi-statement line, with
 /// other statements following it.
 pub fn followed_by_multi_statement_line(stmt: &Stmt, locator: &Locator) -> bool {
-    match_trailing_content(stmt, locator)
+    has_trailing_content(stmt, locator)
 }
 
 /// Return `true` if a `Stmt` is a docstring.
@@ -1293,39 +1281,39 @@ pub fn locate_cmpops(contents: &str) -> Vec<LocatedCmpop> {
                     if let Some((_, _, end)) =
                         tok_iter.next_if(|(_, tok, _)| matches!(tok, Tok::In))
                     {
-                        ops.push(LocatedCmpop::new(start, Some(end), Cmpop::NotIn));
+                        ops.push(LocatedCmpop::new(start, end, Cmpop::NotIn));
                     }
                 }
                 Tok::In => {
-                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::In));
+                    ops.push(LocatedCmpop::new(start, end, Cmpop::In));
                 }
                 Tok::Is => {
                     let op = if let Some((_, _, end)) =
                         tok_iter.next_if(|(_, tok, _)| matches!(tok, Tok::Not))
                     {
-                        LocatedCmpop::new(start, Some(end), Cmpop::IsNot)
+                        LocatedCmpop::new(start, end, Cmpop::IsNot)
                     } else {
-                        LocatedCmpop::new(start, Some(end), Cmpop::Is)
+                        LocatedCmpop::new(start, end, Cmpop::Is)
                     };
                     ops.push(op);
                 }
                 Tok::NotEqual => {
-                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::NotEq));
+                    ops.push(LocatedCmpop::new(start, end, Cmpop::NotEq));
                 }
                 Tok::EqEqual => {
-                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::Eq));
+                    ops.push(LocatedCmpop::new(start, end, Cmpop::Eq));
                 }
                 Tok::GreaterEqual => {
-                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::GtE));
+                    ops.push(LocatedCmpop::new(start, end, Cmpop::GtE));
                 }
                 Tok::Greater => {
-                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::Gt));
+                    ops.push(LocatedCmpop::new(start, end, Cmpop::Gt));
                 }
                 Tok::LessEqual => {
-                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::LtE));
+                    ops.push(LocatedCmpop::new(start, end, Cmpop::LtE));
                 }
                 Tok::Less => {
-                    ops.push(LocatedCmpop::new(start, Some(end), Cmpop::Lt));
+                    ops.push(LocatedCmpop::new(start, end, Cmpop::Lt));
                 }
                 _ => {}
             }
@@ -1337,16 +1325,15 @@ pub fn locate_cmpops(contents: &str) -> Vec<LocatedCmpop> {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use ruff_text_size::TextSize;
+    use ruff_text_size::{TextLen, TextRange, TextSize};
     use rustpython_parser as parser;
-    use rustpython_parser::ast::{Cmpop, Location};
+    use rustpython_parser::ast::Cmpop;
 
     use crate::helpers::{
-        elif_else_range, else_range, first_colon_range, identifier_range, locate_cmpops,
-        match_trailing_content, LocatedCmpop,
+        elif_else_range, else_range, first_colon_range, has_trailing_content, identifier_range,
+        locate_cmpops, LocatedCmpop,
     };
     use crate::source_code::Locator;
-    use crate::types::Range;
 
     #[test]
     fn trailing_content() -> Result<()> {
@@ -1354,25 +1341,25 @@ mod tests {
         let program = parser::parse_program(contents, "<filename>")?;
         let stmt = program.first().unwrap();
         let locator = Locator::new(contents);
-        assert!(!match_trailing_content(stmt, &locator));
+        assert!(!has_trailing_content(stmt, &locator));
 
         let contents = "x = 1; y = 2";
         let program = parser::parse_program(contents, "<filename>")?;
         let stmt = program.first().unwrap();
         let locator = Locator::new(contents);
-        assert!(match_trailing_content(stmt, &locator));
+        assert!(has_trailing_content(stmt, &locator));
 
         let contents = "x = 1  ";
         let program = parser::parse_program(contents, "<filename>")?;
         let stmt = program.first().unwrap();
         let locator = Locator::new(contents);
-        assert!(!match_trailing_content(stmt, &locator));
+        assert!(!has_trailing_content(stmt, &locator));
 
         let contents = "x = 1  # Comment";
         let program = parser::parse_program(contents, "<filename>")?;
         let stmt = program.first().unwrap();
         let locator = Locator::new(contents);
-        assert!(!match_trailing_content(stmt, &locator));
+        assert!(!has_trailing_content(stmt, &locator));
 
         let contents = r#"
 x = 1
@@ -1382,7 +1369,7 @@ y = 2
         let program = parser::parse_program(contents, "<filename>")?;
         let stmt = program.first().unwrap();
         let locator = Locator::new(contents);
-        assert!(!match_trailing_content(stmt, &locator));
+        assert!(!has_trailing_content(stmt, &locator));
 
         Ok(())
     }
@@ -1395,7 +1382,7 @@ y = 2
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::from(4), Location::from(5),)
+            TextRange::new(TextSize::from(4), TextSize::from(5))
         );
 
         let contents = r#"
@@ -1409,7 +1396,7 @@ def \
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::from(9), Location::from(10),)
+            TextRange::new(TextSize::from(8), TextSize::from(9))
         );
 
         let contents = "class Class(): pass".trim();
@@ -1418,7 +1405,7 @@ def \
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::from(6), Location::from(11),)
+            TextRange::new(TextSize::from(6), TextSize::from(11))
         );
 
         let contents = "class Class: pass".trim();
@@ -1427,7 +1414,7 @@ def \
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::from(6), Location::from(11),)
+            TextRange::new(TextSize::from(6), TextSize::from(11))
         );
 
         let contents = r#"
@@ -1441,7 +1428,7 @@ class Class():
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::from(20), Location::from(25),)
+            TextRange::new(TextSize::from(19), TextSize::from(24))
         );
 
         let contents = r#"x = y + 1"#.trim();
@@ -1450,7 +1437,7 @@ class Class():
         let locator = Locator::new(contents);
         assert_eq!(
             identifier_range(stmt, &locator),
-            Range::new(Location::from(1), Location::from(9),)
+            TextRange::new(TextSize::from(0), TextSize::from(9))
         );
 
         Ok(())
@@ -1469,8 +1456,11 @@ else:
         let stmt = program.first().unwrap();
         let locator = Locator::new(contents);
         let range = else_range(stmt, &locator).unwrap();
-        assert_eq!(range.location, TextSize::from(13));
-        assert_eq!(range.end_location(), TextSize::from(17));
+        assert_eq!(&contents[range], "else");
+        assert_eq!(
+            range,
+            TextRange::new(TextSize::from(21), TextSize::from(25))
+        );
         Ok(())
     }
 
@@ -1478,12 +1468,13 @@ else:
     fn extract_first_colon_range() {
         let contents = "with a: pass";
         let locator = Locator::new(contents);
-        let range = first_colon_range(Range::new(Location::from(0), contents.text_len()), &locator)
-            .unwrap();
-        assert_eq!(range.location.row(), 1);
-        assert_eq!(range.location.column(), 6);
-        assert_eq!(range.end_location.row(), 1);
-        assert_eq!(range.end_location.column(), 7);
+        let range = first_colon_range(
+            TextRange::new(TextSize::from(0), contents.text_len()),
+            &locator,
+        )
+        .unwrap();
+        assert_eq!(&contents[range], ":");
+        assert_eq!(range, TextRange::new(TextSize::from(6), TextSize::from(7)));
     }
 
     #[test]
@@ -1499,10 +1490,9 @@ elif b:
         let stmt = program.first().unwrap();
         let locator = Locator::new(contents);
         let range = elif_else_range(stmt, &locator).unwrap();
-        assert_eq!(range.location.row(), 3);
-        assert_eq!(range.location.column(), 0);
-        assert_eq!(range.end_location.row(), 3);
-        assert_eq!(range.end_location.column(), 4);
+        assert_eq!(range.start(), TextSize::from(14));
+        assert_eq!(range.end(), TextSize::from(18));
+
         let contents = "
 if a:
     ...
@@ -1514,10 +1504,9 @@ else:
         let stmt = program.first().unwrap();
         let locator = Locator::new(contents);
         let range = elif_else_range(stmt, &locator).unwrap();
-        assert_eq!(range.location.row(), 3);
-        assert_eq!(range.location.column(), 0);
-        assert_eq!(range.end_location.row(), 3);
-        assert_eq!(range.end_location.column(), 4);
+        assert_eq!(range.start(), TextSize::from(14));
+        assert_eq!(range.end(), TextSize::from(18));
+
         Ok(())
     }
 
@@ -1526,8 +1515,8 @@ else:
         assert_eq!(
             locate_cmpops("x == 1"),
             vec![LocatedCmpop::new(
-                Location::new(1, 2),
-                Location::new(1, 4),
+                TextSize::from(2),
+                TextSize::from(4),
                 Cmpop::Eq
             )]
         );
@@ -1535,8 +1524,8 @@ else:
         assert_eq!(
             locate_cmpops("x != 1"),
             vec![LocatedCmpop::new(
-                Location::new(1, 2),
-                Location::new(1, 4),
+                TextSize::from(2),
+                TextSize::from(4),
                 Cmpop::NotEq
             )]
         );
@@ -1544,8 +1533,8 @@ else:
         assert_eq!(
             locate_cmpops("x is 1"),
             vec![LocatedCmpop::new(
-                Location::new(1, 2),
-                Location::new(1, 4),
+                TextSize::from(2),
+                TextSize::from(4),
                 Cmpop::Is
             )]
         );
@@ -1553,8 +1542,8 @@ else:
         assert_eq!(
             locate_cmpops("x is not 1"),
             vec![LocatedCmpop::new(
-                Location::new(1, 2),
-                Location::new(1, 8),
+                TextSize::from(2),
+                TextSize::from(8),
                 Cmpop::IsNot
             )]
         );
@@ -1562,8 +1551,8 @@ else:
         assert_eq!(
             locate_cmpops("x in 1"),
             vec![LocatedCmpop::new(
-                Location::new(1, 2),
-                Location::new(1, 4),
+                TextSize::from(2),
+                TextSize::from(4),
                 Cmpop::In
             )]
         );
@@ -1571,8 +1560,8 @@ else:
         assert_eq!(
             locate_cmpops("x not in 1"),
             vec![LocatedCmpop::new(
-                Location::new(1, 2),
-                Location::new(1, 8),
+                TextSize::from(2),
+                TextSize::from(8),
                 Cmpop::NotIn
             )]
         );
@@ -1580,8 +1569,8 @@ else:
         assert_eq!(
             locate_cmpops("x != (1 is not 2)"),
             vec![LocatedCmpop::new(
-                Location::new(1, 2),
-                Location::new(1, 4),
+                TextSize::from(2),
+                TextSize::from(4),
                 Cmpop::NotEq
             )]
         );

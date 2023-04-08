@@ -1,5 +1,6 @@
 #![allow(unused_imports)]
 
+use ruff_text_size::TextRange;
 use std::path::Path;
 
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -24,7 +25,7 @@ impl Violation for ShebangMissingExecutableFile {
 #[cfg(target_family = "unix")]
 pub fn shebang_missing(filepath: &Path) -> Option<Diagnostic> {
     if let Ok(true) = is_executable(filepath) {
-        let diagnostic = Diagnostic::new(ShebangMissingExecutableFile, Range::default());
+        let diagnostic = Diagnostic::new(ShebangMissingExecutableFile, TextRange::default());
         return Some(diagnostic);
     }
     None

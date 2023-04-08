@@ -3,7 +3,6 @@ use rustpython_parser::ast::{Constant, Expr, ExprKind, Location, Operator};
 use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::unparse_expr;
-use ruff_python_ast::types::Range;
 use ruff_python_ast::typing::AnnotationKind;
 
 use crate::checkers::ast::Checker;
@@ -109,20 +108,18 @@ pub fn use_pep604_annotation(checker: &mut Checker, expr: &Expr, value: &Expr, s
 
     match typing_member {
         TypingMember::Optional => {
-            let mut diagnostic =
-                Diagnostic::new(NonPEP604Annotation { fixable }, Range::from(expr));
+            let mut diagnostic = Diagnostic::new(NonPEP604Annotation { fixable }, expr.range());
             if fixable && checker.patch(diagnostic.kind.rule()) {
                 diagnostic.set_fix(Edit::replacement(
                     unparse_expr(&optional(slice), checker.stylist),
-                    expr.location,
+                    expr.start(),
                     expr.end(),
                 ));
             }
             checker.diagnostics.push(diagnostic);
         }
         TypingMember::Union => {
-            let mut diagnostic =
-                Diagnostic::new(NonPEP604Annotation { fixable }, Range::from(expr));
+            let mut diagnostic = Diagnostic::new(NonPEP604Annotation { fixable }, expr.range());
             if fixable && checker.patch(diagnostic.kind.rule()) {
                 match &slice.node {
                     ExprKind::Slice { .. } => {
@@ -131,7 +128,7 @@ pub fn use_pep604_annotation(checker: &mut Checker, expr: &Expr, value: &Expr, s
                     ExprKind::Tuple { elts, .. } => {
                         diagnostic.set_fix(Edit::replacement(
                             unparse_expr(&union(elts), checker.stylist),
-                            expr.location,
+                            expr.start(),
                             expr.end(),
                         ));
                     }
@@ -139,7 +136,7 @@ pub fn use_pep604_annotation(checker: &mut Checker, expr: &Expr, value: &Expr, s
                         // Single argument.
                         diagnostic.set_fix(Edit::replacement(
                             unparse_expr(slice, checker.stylist),
-                            expr.location,
+                            expr.start(),
                             expr.end(),
                         ));
                     }

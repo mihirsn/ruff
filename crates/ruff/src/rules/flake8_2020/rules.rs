@@ -141,13 +141,13 @@ pub fn subscript(checker: &mut Checker, value: &Expr, slice: &Expr) {
                     {
                         checker
                             .diagnostics
-                            .push(Diagnostic::new(SysVersionSlice1, Range::from(value)));
+                            .push(Diagnostic::new(SysVersionSlice1, value.range()));
                     } else if *i == BigInt::from(3)
                         && checker.settings.rules.enabled(Rule::SysVersionSlice3)
                     {
                         checker
                             .diagnostics
-                            .push(Diagnostic::new(SysVersionSlice3, Range::from(value)));
+                            .push(Diagnostic::new(SysVersionSlice3, value.range()));
                     }
                 }
             }
@@ -159,12 +159,12 @@ pub fn subscript(checker: &mut Checker, value: &Expr, slice: &Expr) {
                 if *i == BigInt::from(2) && checker.settings.rules.enabled(Rule::SysVersion2) {
                     checker
                         .diagnostics
-                        .push(Diagnostic::new(SysVersion2, Range::from(value)));
+                        .push(Diagnostic::new(SysVersion2, value.range()));
                 } else if *i == BigInt::from(0) && checker.settings.rules.enabled(Rule::SysVersion0)
                 {
                     checker
                         .diagnostics
-                        .push(Diagnostic::new(SysVersion0, Range::from(value)));
+                        .push(Diagnostic::new(SysVersion0, value.range()));
                 }
             }
 
@@ -294,6 +294,6 @@ pub fn name_or_attribute(checker: &mut Checker, expr: &Expr) {
     {
         checker
             .diagnostics
-            .push(Diagnostic::new(SixPY3, Range::from(expr)));
+            .push(Diagnostic::new(SixPY3, expr.range()));
     }
 }

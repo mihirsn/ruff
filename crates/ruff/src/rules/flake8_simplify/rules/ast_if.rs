@@ -288,7 +288,7 @@ pub fn nested_if_statements(
     let mut diagnostic = Diagnostic::new(
         CollapsibleIf { fixable },
         colon.map_or_else(
-            || Range::from(stmt),
+            || stmt.range(),
             |colon| Range::new(stmt.location, colon.end_location),
         ),
     );
@@ -363,7 +363,7 @@ pub fn needless_bool(checker: &mut Checker, stmt: &Stmt) {
         && !has_comments(stmt, checker.locator)
         && (matches!(test.node, ExprKind::Compare { .. }) || checker.ctx.is_builtin("bool"));
 
-    let mut diagnostic = Diagnostic::new(NeedlessBool { condition, fixable }, Range::from(stmt));
+    let mut diagnostic = Diagnostic::new(NeedlessBool { condition, fixable }, stmt.range());
     if fixable && checker.patch(diagnostic.kind.rule()) {
         if matches!(test.node, ExprKind::Compare { .. }) {
             // If the condition is a comparison, we can replace it with the condition.
@@ -520,7 +520,7 @@ pub fn use_ternary_operator(checker: &mut Checker, stmt: &Stmt, parent: Option<&
             contents: contents.clone(),
             fixable,
         },
-        Range::from(stmt),
+        stmt.range(),
     );
     if fixable && checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(contents, stmt.location, stmt.end()));
@@ -742,7 +742,7 @@ pub fn manual_dict_lookup(
 
     checker.diagnostics.push(Diagnostic::new(
         IfElseBlockInsteadOfDictLookup,
-        Range::from(stmt),
+        stmt.range(),
     ));
 }
 
@@ -863,7 +863,7 @@ pub fn use_dict_get_with_default(
             contents: contents.clone(),
             fixable,
         },
-        Range::from(stmt),
+        stmt.range(),
     );
     if fixable && checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(contents, stmt.location, stmt.end()));

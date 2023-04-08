@@ -115,7 +115,7 @@ impl<'a> Importer<'a> {
         tree.codegen(&mut state);
         Ok(Edit::replacement(
             state.to_string(),
-            stmt.location,
+            stmt.start(),
             stmt.end(),
         ))
     }

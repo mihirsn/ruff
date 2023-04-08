@@ -1,3 +1,4 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{Expr, ExprKind};
 
 use ruff_diagnostics::Diagnostic;
@@ -75,7 +76,7 @@ pub fn unnecessary_map(
     func: &Expr,
     args: &[Expr],
 ) {
-    fn create_diagnostic(kind: &str, location: Range) -> Diagnostic {
+    fn create_diagnostic(kind: &str, location: TextRange) -> Diagnostic {
         Diagnostic::new(
             UnnecessaryMap {
                 obj_type: kind.to_string(),
@@ -105,7 +106,7 @@ pub fn unnecessary_map(
             };
 
             if args.len() == 2 && matches!(&args[0].node, ExprKind::Lambda { .. }) {
-                let mut diagnostic = create_diagnostic("generator", Range::from(expr));
+                let mut diagnostic = create_diagnostic("generator", expr.range());
                 if checker.patch(diagnostic.kind.rule()) {
                     diagnostic.try_set_fix(|| {
                         fixes::fix_unnecessary_map(
@@ -134,7 +135,7 @@ pub fn unnecessary_map(
                         return;
                     };
                     if let ExprKind::Lambda { .. } = argument {
-                        let mut diagnostic = create_diagnostic(id, Range::from(expr));
+                        let mut diagnostic = create_diagnostic(id, expr.range());
                         if checker.patch(diagnostic.kind.rule()) {
                             diagnostic.try_set_fix(|| {
                                 fixes::fix_unnecessary_map(
@@ -164,7 +165,7 @@ pub fn unnecessary_map(
                     if let ExprKind::Lambda { body, .. } = &argument {
                         if matches!(&body.node, ExprKind::Tuple { elts, .. } | ExprKind::List { elts, .. } if elts.len() == 2)
                         {
-                            let mut diagnostic = create_diagnostic(id, Range::from(expr));
+                            let mut diagnostic = create_diagnostic(id, expr.range());
                             if checker.patch(diagnostic.kind.rule()) {
                                 diagnostic.try_set_fix(|| {
                                     fixes::fix_unnecessary_map(

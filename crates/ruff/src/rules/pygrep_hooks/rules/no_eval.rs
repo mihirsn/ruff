@@ -28,5 +28,5 @@ pub fn no_eval(checker: &mut Checker, func: &Expr) {
     }
     checker
         .diagnostics
-        .push(Diagnostic::new(Eval, Range::from(func)));
+        .push(Diagnostic::new(Eval, func.range()));
 }

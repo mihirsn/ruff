@@ -1,4 +1,5 @@
 use once_cell::sync::Lazy;
+use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, DiagnosticKind, Edit};
@@ -1727,7 +1728,7 @@ pub fn ambiguous_unicode_character(
                             }
                             .into(),
                         },
-                        Range::new(location, end_location),
+                        TextRange::new(location, end_location),
                     );
                     if settings.rules.enabled(diagnostic.kind.rule()) {
                         if autofix.into() && settings.rules.should_fix(diagnostic.kind.rule()) {

@@ -32,6 +32,6 @@ pub fn try_except_pass(
     {
         checker
             .diagnostics
-            .push(Diagnostic::new(TryExceptPass, Range::from(excepthandler)));
+            .push(Diagnostic::new(TryExceptPass, excepthandler.range()));
     }
 }

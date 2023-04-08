@@ -5,6 +5,7 @@ use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::source_code::Locator;
 use ruff_python_ast::token_kind::TokenKind;
 use ruff_python_ast::types::Range;
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 /// ## What it does
@@ -140,7 +141,7 @@ impl Violation for MultipleLeadingHashesForBlockComment {
 pub(crate) fn whitespace_before_comment(
     tokens: &LogicalLineTokens,
     locator: &Locator,
-) -> Vec<(Range, DiagnosticKind)> {
+) -> Vec<(TextRange, DiagnosticKind)> {
     let mut diagnostics = vec![];
     let mut prev_end = Location::new(0, 0);
     for token in tokens {
@@ -159,7 +160,7 @@ pub(crate) fn whitespace_before_comment(
             if is_inline_comment {
                 if prev_end.row() == start.row() && start.column() < prev_end.column() + 2 {
                     diagnostics.push((
-                        Range::new(prev_end, start),
+                        TextRange::new(prev_end, start),
                         TooFewSpacesBeforeInlineComment.into(),
                     ));
                 }

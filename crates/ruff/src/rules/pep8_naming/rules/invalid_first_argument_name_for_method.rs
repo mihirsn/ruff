@@ -88,6 +88,6 @@ pub fn invalid_first_argument_name_for_method(
     }
     Some(Diagnostic::new(
         InvalidFirstArgumentNameForMethod,
-        Range::from(arg),
+        arg.range(),
     ))
 }

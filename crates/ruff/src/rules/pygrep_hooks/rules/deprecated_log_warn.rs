@@ -27,6 +27,6 @@ pub fn deprecated_log_warn(checker: &mut Checker, func: &Expr) {
     {
         checker
             .diagnostics
-            .push(Diagnostic::new(DeprecatedLogWarn, Range::from(func)));
+            .push(Diagnostic::new(DeprecatedLogWarn, func.range()));
     }
 }

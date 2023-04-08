@@ -62,7 +62,7 @@ pub fn useless_expression(checker: &mut Checker, value: &Expr) {
                 UselessExpression {
                     kind: Kind::Attribute,
                 },
-                Range::from(value),
+                value.range(),
             ));
         }
         return;
@@ -72,6 +72,6 @@ pub fn useless_expression(checker: &mut Checker, value: &Expr) {
         UselessExpression {
             kind: Kind::Expression,
         },
-        Range::from(value),
+        value.range(),
     ));
 }

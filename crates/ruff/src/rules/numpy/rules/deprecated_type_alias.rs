@@ -68,7 +68,7 @@ pub fn deprecated_type_alias(checker: &mut Checker, expr: &Expr) {
             NumpyDeprecatedTypeAlias {
                 type_name: type_name.to_string(),
             },
-            Range::from(expr),
+            expr.range(),
         );
         if checker.patch(diagnostic.kind.rule()) {
             diagnostic.set_fix(Edit::replacement(

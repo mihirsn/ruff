@@ -76,6 +76,6 @@ pub fn binary_op_exception(checker: &mut Checker, excepthandler: &Excepthandler)
 
     checker.diagnostics.push(Diagnostic::new(
         BinaryOpException { op: op.into() },
-        Range::from(type_),
+        type_.range(),
     ));
 }

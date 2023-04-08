@@ -220,7 +220,7 @@ pub fn convert_for_loop_to_any_all(checker: &mut Checker, stmt: &Stmt, sibling: 
                     ReimplementedBuiltin {
                         repl: contents.clone(),
                     },
-                    Range::from(stmt),
+                    stmt.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) && checker.ctx.is_builtin("any") {
                     diagnostic.set_fix(Edit::replacement(
@@ -297,7 +297,7 @@ pub fn convert_for_loop_to_any_all(checker: &mut Checker, stmt: &Stmt, sibling: 
                     ReimplementedBuiltin {
                         repl: contents.clone(),
                     },
-                    Range::from(stmt),
+                    stmt.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) && checker.ctx.is_builtin("all") {
                     diagnostic.set_fix(Edit::replacement(

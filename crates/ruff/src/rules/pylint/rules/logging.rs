@@ -128,7 +128,7 @@ pub fn logging_call(checker: &mut Checker, func: &Expr, args: &[Expr], keywords:
                             if summary.num_positional < message_args {
                                 checker
                                     .diagnostics
-                                    .push(Diagnostic::new(LoggingTooManyArgs, Range::from(func)));
+                                    .push(Diagnostic::new(LoggingTooManyArgs, func.range()));
                             }
                         }
 
@@ -139,7 +139,7 @@ pub fn logging_call(checker: &mut Checker, func: &Expr, args: &[Expr], keywords:
                             {
                                 checker
                                     .diagnostics
-                                    .push(Diagnostic::new(LoggingTooFewArgs, Range::from(func)));
+                                    .push(Diagnostic::new(LoggingTooFewArgs, func.range()));
                             }
                         }
                     }

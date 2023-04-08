@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use ruff_text_size::TextRange;
 use rustpython_parser::lexer::{LexResult, Spanned};
 use rustpython_parser::Tok;
 
@@ -253,13 +254,8 @@ pub fn trailing_commas(
         };
         if comma_prohibited {
             let comma = prev.spanned.unwrap();
-            let mut diagnostic = Diagnostic::new(
-                ProhibitedTrailingComma,
-                Range {
-                    location: comma.0,
-                    end_location: comma.2,
-                },
-            );
+            let mut diagnostic =
+                Diagnostic::new(ProhibitedTrailingComma, TextRange::new(comma.0, comma.2));
             if autofix.into() && settings.rules.should_fix(Rule::ProhibitedTrailingComma) {
                 diagnostic.set_fix(Edit::deletion(comma.0, comma.2));
             }
@@ -274,10 +270,7 @@ pub fn trailing_commas(
             let comma = prev.spanned.unwrap();
             diagnostics.push(Diagnostic::new(
                 TrailingCommaOnBareTuple,
-                Range {
-                    location: comma.0,
-                    end_location: comma.2,
-                },
+                TextRange::new(comma.0, comma.2),
             ));
         }
 
@@ -297,13 +290,8 @@ pub fn trailing_commas(
             );
         if comma_required {
             let missing_comma = prev_prev.spanned.unwrap();
-            let mut diagnostic = Diagnostic::new(
-                MissingTrailingComma,
-                Range {
-                    location: missing_comma.2,
-                    end_location: missing_comma.2,
-                },
-            );
+            let mut diagnostic =
+                Diagnostic::new(MissingTrailingComma, TextRange::new(comma.0, comma.2));
             if autofix.into() && settings.rules.should_fix(Rule::MissingTrailingComma) {
                 // Create a replacement that includes the final bracket (or other token),
                 // rather than just inserting a comma at the end. This prevents the UP034 autofix

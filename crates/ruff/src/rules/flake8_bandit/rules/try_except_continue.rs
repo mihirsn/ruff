@@ -30,9 +30,8 @@ pub fn try_except_continue(
         && body[0].node == StmtKind::Continue
         && (check_typed_exception || is_untyped_exception(type_, checker))
     {
-        checker.diagnostics.push(Diagnostic::new(
-            TryExceptContinue,
-            Range::from(excepthandler),
-        ));
+        checker
+            .diagnostics
+            .push(Diagnostic::new(TryExceptContinue, excepthandler.range()));
     }
 }

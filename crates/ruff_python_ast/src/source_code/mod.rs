@@ -11,7 +11,6 @@ pub use indexer::Indexer;
 pub use locator::Locator;
 use ruff_text_size::{TextRange, TextSize};
 use rustpython_parser as parser;
-use rustpython_parser::ast::Location;
 use rustpython_parser::{lexer, Mode, ParseError};
 use std::fmt::{Debug, Formatter};
 
@@ -44,35 +43,25 @@ impl<'src, 'index> SourceCode<'src, 'index> {
         }
     }
 
+    /// Computes the one indexed row and column numbers for `offset`.
+    pub fn source_location(&self, offset: TextSize) -> SourceLocation {
+        self.index.source_location(offset, &self.text)
+    }
+
+    // TODO inline
     /// Take the source code up to the given [`Location`].
-    pub fn up_to(&self, location: Location) -> &'src str {
-        let offset = self.index.location_offset(location, self.text);
+    pub fn up_to(&self, offset: TextSize) -> &'src str {
         &self.text[TextRange::up_to(offset)]
     }
 
     /// Take the source code after the given [`Location`].
-    pub fn after(&self, location: Location) -> &'src str {
-        let offset = self.index.location_offset(location, self.text);
+    pub fn after(&self, offset: TextSize) -> &'src str {
         &self.text[usize::from(offset)..]
     }
 
     /// Take the source code between the given [`Range`].
     pub fn slice<R: Into<Range>>(&self, range: R) -> &'src str {
-        let range = self.text_range(range);
-        &self.text[range]
-    }
-
-    /// Converts a [`Location`] range to a byte offset range
-    pub fn text_range<R: Into<Range>>(&self, range: R) -> TextRange {
-        let range = range.into();
-        let start = self.index.location_offset(range.location, self.text);
-        let end = self.index.location_offset(range.end_location, self.text);
-        TextRange::new(start, end)
-    }
-
-    /// Return the byte offset of the given [`Location`].
-    pub fn offset(&self, location: Location) -> TextSize {
-        self.index.location_offset(location, self.text)
+        &self.text[range.into().range]
     }
 
     pub fn line_start(&self, line: OneIndexed) -> TextSize {
@@ -85,20 +74,6 @@ impl<'src, 'index> SourceCode<'src, 'index> {
 
     pub fn line_range(&self, line: OneIndexed) -> TextRange {
         self.index.line_range(line, self.text)
-    }
-
-    /// Returns a string with the lines spawning between location and end location.
-    pub fn lines(&self, range: Range) -> &'src str {
-        let start_line = self
-            .index
-            .line_range(OneIndexed::new(range.location.row()).unwrap(), self.text);
-
-        let end_line = self.index.line_range(
-            OneIndexed::new(range.end_location.row()).unwrap(),
-            self.text,
-        );
-
-        &self.text[TextRange::new(start_line.start(), end_line.end())]
     }
 
     /// Returns the source text of the line with the given index
@@ -259,8 +234,17 @@ impl PartialEq for FileSourceCode {
 
 impl Eq for FileSourceCode {}
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct SourceLocation {
     pub row: OneIndexed,
     pub column: OneIndexed,
+}
+
+impl Debug for SourceLocation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SourceLocation")
+            .field("row", &self.row.get())
+            .field("column", &self.column.get())
+            .finish()
+    }
 }

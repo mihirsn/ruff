@@ -52,7 +52,7 @@ pub fn compare_to_hardcoded_password_string(left: &Expr, comparators: &[Expr]) -
                 HardcodedPasswordString {
                     string: string.to_string(),
                 },
-                Range::from(comp),
+                comp.range(),
             ))
         })
         .collect()
@@ -67,7 +67,7 @@ pub fn assign_hardcoded_password_string(value: &Expr, targets: &[Expr]) -> Optio
                     HardcodedPasswordString {
                         string: string.to_string(),
                     },
-                    Range::from(value),
+                    value.range(),
                 ));
             }
         }

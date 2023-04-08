@@ -1,4 +1,6 @@
+use ruff_text_size::{TextRange, TextSize};
 use rustpython_parser::ast::{Constant, Expr, ExprKind, Keyword, Location, Operator};
+use std::ops::Add;
 
 use ruff_diagnostics::{Diagnostic, Edit};
 use ruff_python_ast::helpers::{find_keyword, SimpleCallArgs};
@@ -47,14 +49,14 @@ fn check_msg(checker: &mut Checker, msg: &Expr) {
                 if checker.settings.rules.enabled(Rule::LoggingStringConcat) {
                     checker
                         .diagnostics
-                        .push(Diagnostic::new(LoggingStringConcat, Range::from(msg)));
+                        .push(Diagnostic::new(LoggingStringConcat, msg.range()));
                 }
             }
             Operator::Mod => {
                 if checker.settings.rules.enabled(Rule::LoggingPercentFormat) {
                     checker
                         .diagnostics
-                        .push(Diagnostic::new(LoggingPercentFormat, Range::from(msg)));
+                        .push(Diagnostic::new(LoggingPercentFormat, msg.range()));
                 }
             }
             _ => {}
@@ -64,7 +66,7 @@ fn check_msg(checker: &mut Checker, msg: &Expr) {
             if checker.settings.rules.enabled(Rule::LoggingFString) {
                 checker
                     .diagnostics
-                    .push(Diagnostic::new(LoggingFString, Range::from(msg)));
+                    .push(Diagnostic::new(LoggingFString, msg.range()));
             }
         }
         // Check for .format() calls.
@@ -74,7 +76,7 @@ fn check_msg(checker: &mut Checker, msg: &Expr) {
                     if attr == "format" && matches!(value.node, ExprKind::Constant { .. }) {
                         checker
                             .diagnostics
-                            .push(Diagnostic::new(LoggingStringFormat, Range::from(msg)));
+                            .push(Diagnostic::new(LoggingStringFormat, msg.range()));
                     }
                 }
             }
@@ -97,7 +99,7 @@ fn check_log_record_attr_clash(checker: &mut Checker, extra: &Keyword) {
                         if RESERVED_ATTRS.contains(&string.as_str()) {
                             checker.diagnostics.push(Diagnostic::new(
                                 LoggingExtraAttrClash(string.to_string()),
-                                Range::from(key),
+                                key.range(),
                             ));
                         }
                     }
@@ -115,7 +117,7 @@ fn check_log_record_attr_clash(checker: &mut Checker, extra: &Keyword) {
                         if RESERVED_ATTRS.contains(&key.as_str()) {
                             checker.diagnostics.push(Diagnostic::new(
                                 LoggingExtraAttrClash(key.to_string()),
-                                Range::from(keyword),
+                                keyword.range(),
                             ));
                         }
                     }
@@ -153,10 +155,7 @@ pub fn logging_call(checker: &mut Checker, func: &Expr, args: &[Expr], keywords:
     if let ExprKind::Attribute { value, attr, .. } = &func.node {
         if let Some(logging_call_type) = LoggingCallType::from_attribute(attr.as_str()) {
             let call_args = SimpleCallArgs::new(args, keywords);
-            let level_call_range = Range::new(
-                Location::new(func.location.row(), value.end().column() + 1),
-                Location::new(func.end().row(), func.end().column()),
-            );
+            let level_call_range = TextRange::new(value.end().add(TextSize::from(1)), func.end());
 
             // G001 - G004
             let msg_pos = usize::from(matches!(logging_call_type, LoggingCallType::LogCall));
@@ -238,7 +237,7 @@ pub fn logging_call(checker: &mut Checker, func: &Expr, args: &[Expr], keywords:
                                 {
                                     checker.diagnostics.push(Diagnostic::new(
                                         LoggingRedundantExcInfo,
-                                        Range::from(exc_info),
+                                        exc_info.range(),
                                     ));
                                 }
                             }

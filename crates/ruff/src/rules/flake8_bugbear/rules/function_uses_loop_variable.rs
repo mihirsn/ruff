@@ -1,3 +1,4 @@
+use ruff_text_size::TextRange;
 use rustc_hash::FxHashSet;
 use rustpython_parser::ast::{Comprehension, Expr, ExprContext, ExprKind, Stmt, StmtKind};
 
@@ -26,9 +27,9 @@ impl Violation for FunctionUsesLoopVariable {
 #[derive(Default)]
 struct LoadedNamesVisitor<'a> {
     // Tuple of: name, defining expression, and defining range.
-    loaded: Vec<(&'a str, &'a Expr, Range)>,
+    loaded: Vec<(&'a str, &'a Expr, TextRange)>,
     // Tuple of: name, defining expression, and defining range.
-    stored: Vec<(&'a str, &'a Expr, Range)>,
+    stored: Vec<(&'a str, &'a Expr, TextRange)>,
 }
 
 /// `Visitor` to collect all used identifiers in a statement.
@@ -39,8 +40,8 @@ where
     fn visit_expr(&mut self, expr: &'b Expr) {
         match &expr.node {
             ExprKind::Name { id, ctx } => match ctx {
-                ExprContext::Load => self.loaded.push((id, expr, Range::from(expr))),
-                ExprContext::Store => self.stored.push((id, expr, Range::from(expr))),
+                ExprContext::Load => self.loaded.push((id, expr, expr.range())),
+                ExprContext::Store => self.stored.push((id, expr, expr.range())),
                 ExprContext::Del => {}
             },
             _ => visitor::walk_expr(self, expr),
@@ -50,7 +51,7 @@ where
 
 #[derive(Default)]
 struct SuspiciousVariablesVisitor<'a> {
-    names: Vec<(&'a str, &'a Expr, Range)>,
+    names: Vec<(&'a str, &'a Expr, TextRange)>,
     safe_functions: Vec<&'a Expr>,
 }
 

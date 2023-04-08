@@ -127,5 +127,5 @@ pub fn key_in_dict_compare(
     }
     let right = comparators.first().unwrap();
 
-    key_in_dict(checker, left, right, Range::from(expr));
+    key_in_dict(checker, left, right, expr.range());
 }

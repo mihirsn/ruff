@@ -1,3 +1,4 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 use rustpython_parser::lexer::LexResult;
 
@@ -63,8 +64,7 @@ pub fn check_logical_lines(
                 if settings.rules.enabled(kind.rule()) {
                     diagnostics.push(Diagnostic {
                         kind,
-                        location,
-                        end_location: location,
+                        range: TextRange::empty(location),
                         fix: Fix::empty(),
                         parent: None,
                     });
@@ -75,8 +75,7 @@ pub fn check_logical_lines(
                 if settings.rules.enabled(kind.rule()) {
                     diagnostics.push(Diagnostic {
                         kind,
-                        location,
-                        end_location: location,
+                        range: TextRange::empty(location),
                         fix: Fix::empty(),
                         parent: None,
                     });
@@ -86,8 +85,7 @@ pub fn check_logical_lines(
                 if settings.rules.enabled(kind.rule()) {
                     diagnostics.push(Diagnostic {
                         kind,
-                        location,
-                        end_location: location,
+                        range: TextRange::empty(location),
                         fix: Fix::empty(),
                         parent: None,
                     });
@@ -108,8 +106,7 @@ pub fn check_logical_lines(
                 if settings.rules.enabled(kind.rule()) {
                     diagnostics.push(Diagnostic {
                         kind,
-                        location,
-                        end_location: location,
+                        range: TextRange::empty(location),
                         fix: Fix::empty(),
                         parent: None,
                     });
@@ -121,8 +118,7 @@ pub fn check_logical_lines(
                 if settings.rules.enabled(kind.rule()) {
                     diagnostics.push(Diagnostic {
                         kind,
-                        location,
-                        end_location: location,
+                        range: TextRange::empty(location),
                         fix: Fix::empty(),
                         parent: None,
                     });
@@ -133,8 +129,7 @@ pub fn check_logical_lines(
                 if settings.rules.enabled(kind.rule()) {
                     diagnostics.push(Diagnostic {
                         kind,
-                        location,
-                        end_location: location,
+                        range: TextRange::empty(location),
                         fix: Fix::empty(),
                         parent: None,
                     });
@@ -146,8 +141,7 @@ pub fn check_logical_lines(
                 if settings.rules.enabled(kind.rule()) {
                     diagnostics.push(Diagnostic {
                         kind,
-                        location: range.location,
-                        end_location: range.end_location,
+                        range,
                         fix: Fix::empty(),
                         parent: None,
                     });
@@ -183,8 +177,7 @@ pub fn check_logical_lines(
             if settings.rules.enabled(kind.rule()) {
                 diagnostics.push(Diagnostic {
                     kind,
-                    location,
-                    end_location: location,
+                    range: TextRange::empty(location),
                     fix: Fix::empty(),
                     parent: None,
                 });

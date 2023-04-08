@@ -548,7 +548,7 @@ pub fn deprecated_import(
             DeprecatedImport {
                 deprecation: Deprecation::WithoutRename(operation),
             },
-            Range::from(stmt),
+            stmt.range(),
         );
         if checker.patch(Rule::DeprecatedImport) {
             if let Some(content) = fix {
@@ -563,7 +563,7 @@ pub fn deprecated_import(
             DeprecatedImport {
                 deprecation: Deprecation::WithRename(operation),
             },
-            Range::from(stmt),
+            stmt.range(),
         );
         checker.diagnostics.push(diagnostic);
     }

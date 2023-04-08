@@ -49,10 +49,7 @@ pub fn type_comment_in_stub(tokens: &[LexResult]) -> Vec<Diagnostic> {
             if TYPE_COMMENT_REGEX.is_match(comment) && !TYPE_IGNORE_REGEX.is_match(comment) {
                 diagnostics.push(Diagnostic::new(
                     TypeCommentInStub,
-                    Range {
-                        location: *location,
-                        end_location: *end_location,
-                    },
+                    TextRange::new(*location, *end_location),
                 ));
             }
         }

@@ -65,14 +65,14 @@ fn apply_fixes<'a>(
 
         for edit in fix.edits() {
             // Add all contents from `last_pos` to `fix.location`.
-            let slice = locator.slice(Range::new(last_pos.unwrap_or_default(), edit.location()));
+            let slice = locator.slice(Range::new(last_pos.unwrap_or_default(), edit.start()));
             output.push_str(slice);
 
             // Add the patch itself.
             output.push_str(edit.content().unwrap_or_default());
 
             // Track that the edit was applied.
-            last_pos = Some(edit.end_location());
+            last_pos = Some(edit.end());
             applied.insert(edit);
         }
 
@@ -114,8 +114,7 @@ mod tests {
             .map(|edit| Diagnostic {
                 // The choice of rule here is arbitrary.
                 kind: MissingNewlineAtEndOfFile.into(),
-                location: edit.location(),
-                end_location: edit.end_location(),
+                range: edit.range(),
                 fix: edit.into(),
                 parent: None,
             })

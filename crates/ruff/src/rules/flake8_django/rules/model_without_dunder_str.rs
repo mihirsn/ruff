@@ -63,7 +63,7 @@ pub fn model_without_dunder_str(
     if !has_dunder_method(body) {
         return Some(Diagnostic::new(
             DjangoModelWithoutDunderStr,
-            Range::from(class_location),
+            class_location.range(),
         ));
     }
     None

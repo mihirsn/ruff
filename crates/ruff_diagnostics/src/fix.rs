@@ -29,7 +29,7 @@ impl Fix {
 
     /// Return the [`Location`] of the first [`Edit`] in the [`Fix`].
     pub fn min_location(&self) -> Option<Location> {
-        self.edits.iter().map(Edit::location).min()
+        self.edits.iter().map(Edit::start).min()
     }
 
     /// Return a slice of the [`Edit`] elements in the [`Fix`].

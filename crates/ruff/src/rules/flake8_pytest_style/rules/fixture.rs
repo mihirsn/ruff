@@ -248,7 +248,7 @@ fn pytest_fixture_parentheses(
             expected_parens: preferred.to_string(),
             actual_parens: actual.to_string(),
         },
-        Range::from(decorator),
+        decorator.range(),
     );
     if checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(fix);
@@ -298,7 +298,7 @@ fn check_fixture_decorator(checker: &mut Checker, func_name: &str, decorator: &E
                     PytestFixturePositionalArgs {
                         function: func_name.to_string(),
                     },
-                    Range::from(decorator),
+                    decorator.range(),
                 ));
             }
 
@@ -313,17 +313,15 @@ fn check_fixture_decorator(checker: &mut Checker, func_name: &str, decorator: &E
 
                 if let Some(scope_keyword) = scope_keyword {
                     if keyword_is_literal(scope_keyword, "function") {
-                        let mut diagnostic = Diagnostic::new(
-                            PytestExtraneousScopeFunction,
-                            Range::from(scope_keyword),
-                        );
+                        let mut diagnostic =
+                            Diagnostic::new(PytestExtraneousScopeFunction, scope_keyword.range());
                         if checker.patch(diagnostic.kind.rule()) {
-                            let location = diagnostic.location;
-                            let end_location = diagnostic.end_location;
+                            let location = diagnostic.start();
+                            let end_location = diagnostic.end();
                             diagnostic.try_set_fix(|| {
                                 fix_extraneous_scope_function(
                                     checker.locator,
-                                    decorator.location,
+                                    decorator.start(),
                                     location,
                                     end_location,
                                     args,
@@ -369,7 +367,7 @@ fn check_fixture_returns(checker: &mut Checker, func: &Stmt, func_name: &str, bo
             PytestIncorrectFixtureNameUnderscore {
                 function: func_name.to_string(),
             },
-            Range::from(func),
+            func.range(),
         ));
     } else if checker
         .settings
@@ -383,7 +381,7 @@ fn check_fixture_returns(checker: &mut Checker, func: &Stmt, func_name: &str, bo
             PytestMissingFixtureNameUnderscore {
                 function: func_name.to_string(),
             },
-            Range::from(func),
+            func.range(),
         ));
     }
 
@@ -400,7 +398,7 @@ fn check_fixture_returns(checker: &mut Checker, func: &Stmt, func_name: &str, bo
                             PytestUselessYieldFixture {
                                 name: func_name.to_string(),
                             },
-                            Range::from(stmt),
+                            stmt.range(),
                         );
                         if checker.patch(diagnostic.kind.rule()) {
                             diagnostic.set_fix(Edit::replacement(
@@ -429,7 +427,7 @@ fn check_test_function_args(checker: &mut Checker, args: &Arguments) {
                 PytestFixtureParamWithoutValue {
                     name: name.to_string(),
                 },
-                Range::from(arg),
+                arg.range(),
             ));
         }
     });
@@ -440,7 +438,7 @@ fn check_fixture_decorator_name(checker: &mut Checker, decorator: &Expr) {
     if is_pytest_yield_fixture(decorator, checker) {
         checker.diagnostics.push(Diagnostic::new(
             PytestDeprecatedYieldFixture,
-            Range::from(decorator),
+            decorator.range(),
         ));
     }
 }
@@ -476,7 +474,7 @@ fn check_fixture_marks(checker: &mut Checker, decorators: &[Expr]) {
         {
             if *name == "asyncio" {
                 let mut diagnostic =
-                    Diagnostic::new(PytestUnnecessaryAsyncioMarkOnFixture, Range::from(expr));
+                    Diagnostic::new(PytestUnnecessaryAsyncioMarkOnFixture, expr.range());
                 if checker.patch(diagnostic.kind.rule()) {
                     let start = Location::new(expr.location.row(), 0);
                     let end = Location::new(expr.end_location.unwrap().row() + 1, 0);
@@ -493,7 +491,7 @@ fn check_fixture_marks(checker: &mut Checker, decorators: &[Expr]) {
         {
             if *name == "usefixtures" {
                 let mut diagnostic =
-                    Diagnostic::new(PytestErroneousUseFixturesOnFixture, Range::from(expr));
+                    Diagnostic::new(PytestErroneousUseFixturesOnFixture, expr.range());
                 if checker.patch(diagnostic.kind.rule()) {
                     let start = Location::new(expr.location.row(), 0);
                     let end = Location::new(expr.end_location.unwrap().row() + 1, 0);

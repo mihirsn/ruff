@@ -284,6 +284,6 @@ pub fn bad_string_format_type(checker: &mut Checker, expr: &Expr, right: &Expr) 
     if !is_valid {
         checker
             .diagnostics
-            .push(Diagnostic::new(BadStringFormatType, Range::from(expr)));
+            .push(Diagnostic::new(BadStringFormatType, expr.range()));
     }
 }

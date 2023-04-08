@@ -74,7 +74,7 @@ pub fn hashlib_insecure_hash_functions(
                                 HashlibInsecureHashFunction {
                                     string: hash_func_name.to_string(),
                                 },
-                                Range::from(name_arg),
+                                name_arg.range(),
                             ));
                         }
                     }
@@ -91,7 +91,7 @@ pub fn hashlib_insecure_hash_functions(
                     HashlibInsecureHashFunction {
                         string: (*func_name).to_string(),
                     },
-                    Range::from(func),
+                    func.range(),
                 ));
             }
         }

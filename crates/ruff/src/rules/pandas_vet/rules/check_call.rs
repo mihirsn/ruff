@@ -111,5 +111,5 @@ pub fn check_call(checker: &mut Checker, func: &Expr) {
 
     checker
         .diagnostics
-        .push(Diagnostic::new(violation, Range::from(func)));
+        .push(Diagnostic::new(violation, func.range()));
 }

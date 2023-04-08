@@ -84,9 +84,8 @@ pub fn prefix_type_params(checker: &mut Checker, value: &Expr, targets: &[Expr])
         }) else {
             return;
         };
-        checker.diagnostics.push(Diagnostic::new(
-            UnprefixedTypeParam { kind },
-            Range::from(value),
-        ));
+        checker
+            .diagnostics
+            .push(Diagnostic::new(UnprefixedTypeParam { kind }, value.range()));
     }
 }

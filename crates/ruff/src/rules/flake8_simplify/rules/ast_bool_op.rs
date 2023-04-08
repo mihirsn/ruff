@@ -223,7 +223,7 @@ pub fn duplicate_isinstance_call(checker: &mut Checker, expr: &Expr) {
                     },
                     fixable,
                 },
-                Range::from(expr),
+                expr.range(),
             );
             if fixable && checker.patch(diagnostic.kind.rule()) {
                 // Grab the types used in each duplicate `isinstance` call (e.g., `int` and `str`
@@ -367,7 +367,7 @@ pub fn compare_with_tuple(checker: &mut Checker, expr: &Expr) {
             CompareWithTuple {
                 replacement: unparse_expr(&in_expr, checker.stylist),
             },
-            Range::from(expr),
+            expr.range(),
         );
         if checker.patch(diagnostic.kind.rule()) {
             let unmatched: Vec<Expr> = values
@@ -434,7 +434,7 @@ pub fn expr_and_not_expr(checker: &mut Checker, expr: &Expr) {
                     ExprAndNotExpr {
                         name: id.to_string(),
                     },
-                    Range::from(expr),
+                    expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     diagnostic.set_fix(Edit::replacement(
@@ -488,7 +488,7 @@ pub fn expr_or_not_expr(checker: &mut Checker, expr: &Expr) {
                     ExprOrNotExpr {
                         name: id.to_string(),
                     },
-                    Range::from(expr),
+                    expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     diagnostic.set_fix(Edit::replacement(

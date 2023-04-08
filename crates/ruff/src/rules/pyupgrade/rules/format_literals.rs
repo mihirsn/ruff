@@ -139,7 +139,7 @@ pub(crate) fn format_literals(checker: &mut Checker, summary: &FormatSummary, ex
         return;
     }
 
-    let mut diagnostic = Diagnostic::new(FormatLiterals, Range::from(expr));
+    let mut diagnostic = Diagnostic::new(FormatLiterals, expr.range());
     if checker.patch(diagnostic.kind.rule()) {
         // Currently, the only issue we know of is in LibCST:
         // https://github.com/Instagram/LibCST/issues/846

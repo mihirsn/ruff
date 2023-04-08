@@ -74,10 +74,9 @@ pub fn raises_call(checker: &mut Checker, func: &Expr, args: &[Expr], keywords: 
             .enabled(Rule::PytestRaisesWithoutException)
         {
             if args.is_empty() && keywords.is_empty() {
-                checker.diagnostics.push(Diagnostic::new(
-                    PytestRaisesWithoutException,
-                    Range::from(func),
-                ));
+                checker
+                    .diagnostics
+                    .push(Diagnostic::new(PytestRaisesWithoutException, func.range()));
             }
         }
 
@@ -134,7 +133,7 @@ pub fn complex_raises(checker: &mut Checker, stmt: &Stmt, items: &[Withitem], bo
         if is_too_complex {
             checker.diagnostics.push(Diagnostic::new(
                 PytestRaisesWithMultipleStatements,
-                Range::from(stmt),
+                stmt.range(),
             ));
         }
     }

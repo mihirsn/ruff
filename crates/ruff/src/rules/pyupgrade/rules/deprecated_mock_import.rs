@@ -255,7 +255,7 @@ pub fn deprecated_mock_attribute(checker: &mut Checker, expr: &Expr) {
                 DeprecatedMockImport {
                     reference_type: MockReference::Attribute,
                 },
-                Range::from(value),
+                value.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 diagnostic.set_fix(Edit::replacement(
@@ -330,7 +330,7 @@ pub fn deprecated_mock_import(checker: &mut Checker, stmt: &Stmt) {
                     DeprecatedMockImport {
                         reference_type: MockReference::Import,
                     },
-                    Range::from(stmt),
+                    stmt.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     if let Some(indent) = indentation(checker.locator, stmt) {

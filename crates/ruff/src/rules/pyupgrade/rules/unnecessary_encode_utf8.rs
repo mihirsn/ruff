@@ -157,7 +157,7 @@ pub fn unnecessary_encode_utf8(
                         UnnecessaryEncodeUTF8 {
                             reason: Reason::BytesLiteral,
                         },
-                        Range::from(expr),
+                        expr.range(),
                     );
                     if checker.patch(Rule::UnnecessaryEncodeUTF8) {
                         diagnostic.set_fix(replace_with_bytes_literal(
@@ -174,7 +174,7 @@ pub fn unnecessary_encode_utf8(
                         UnnecessaryEncodeUTF8 {
                             reason: Reason::DefaultArgument,
                         },
-                        Range::from(expr),
+                        expr.range(),
                     );
                     if checker.patch(Rule::UnnecessaryEncodeUTF8) {
                         diagnostic.try_set_fix(|| {
@@ -196,7 +196,7 @@ pub fn unnecessary_encode_utf8(
                         UnnecessaryEncodeUTF8 {
                             reason: Reason::DefaultArgument,
                         },
-                        Range::from(expr),
+                        expr.range(),
                     );
                     if checker.patch(Rule::UnnecessaryEncodeUTF8) {
                         diagnostic.try_set_fix(|| {
@@ -225,7 +225,7 @@ pub fn unnecessary_encode_utf8(
                         UnnecessaryEncodeUTF8 {
                             reason: Reason::DefaultArgument,
                         },
-                        Range::from(expr),
+                        expr.range(),
                     );
                     if checker.patch(Rule::UnnecessaryEncodeUTF8) {
                         diagnostic.try_set_fix(|| {
@@ -247,7 +247,7 @@ pub fn unnecessary_encode_utf8(
                         UnnecessaryEncodeUTF8 {
                             reason: Reason::DefaultArgument,
                         },
-                        Range::from(expr),
+                        expr.range(),
                     );
                     if checker.patch(Rule::UnnecessaryEncodeUTF8) {
                         diagnostic.try_set_fix(|| {

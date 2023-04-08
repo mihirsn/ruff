@@ -54,11 +54,11 @@ pub fn print_call(checker: &mut Checker, func: &Expr, keywords: &[Keyword]) {
                     }
                 }
             }
-            Diagnostic::new(Print, Range::from(func))
+            Diagnostic::new(Print, func.range())
         } else if call_path.as_ref().map_or(false, |call_path| {
             *call_path.as_slice() == ["pprint", "pprint"]
         }) {
-            Diagnostic::new(PPrint, Range::from(func))
+            Diagnostic::new(PPrint, func.range())
         } else {
             return;
         }

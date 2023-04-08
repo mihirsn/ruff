@@ -1,3 +1,4 @@
+use ruff_text_size::TextRange;
 use std::ops::Deref;
 
 use rustpython_parser::ast::{Expr, Located, Location, Stmt};
@@ -9,30 +10,30 @@ pub enum Node<'a> {
 }
 
 // TODO replace with `TextRange`
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Range {
-    pub location: Location,
-    pub end_location: Location,
+    pub range: TextRange,
 }
 
 impl Range {
     pub const fn new(location: Location, end_location: Location) -> Self {
-        Self {
-            location,
-            end_location,
-        }
+        Self::from_range(TextRange::new(location, end_location))
+    }
+
+    pub const fn from_range(range: TextRange) -> Self {
+        Self { range }
     }
 }
 
 impl<T> From<&Located<T>> for Range {
     fn from(located: &Located<T>) -> Self {
-        Range::new(located.location, located.end())
+        Range::from_range(located.range())
     }
 }
 
 impl<T> From<&Box<Located<T>>> for Range {
     fn from(located: &Box<Located<T>>) -> Self {
-        Range::new(located.location, located.end())
+        Range::from_range(located.range())
     }
 }
 

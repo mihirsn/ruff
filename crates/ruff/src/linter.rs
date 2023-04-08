@@ -274,7 +274,7 @@ pub fn add_noqa_to_path(path: &Path, package: Option<&Path>, settings: &Settings
     let stylist = Stylist::from_tokens(&tokens, &locator);
 
     // Extra indices from the code.
-    let indexer: Indexer = tokens.as_slice().into();
+    let indexer = Indexer::from_tokens(&tokens, &locator);
 
     // Extract the `# noqa` and `# isort: skip` directives from the source.
     let directives =
@@ -339,7 +339,7 @@ pub fn lint_only(
     let stylist = Stylist::from_tokens(&tokens, &locator);
 
     // Extra indices from the code.
-    let indexer: Indexer = tokens.as_slice().into();
+    let indexer = Indexer::from_tokens(&tokens, &locator);
 
     // Extract the `# noqa` and `# isort: skip` directives from the source.
     let directives =
@@ -427,7 +427,7 @@ pub fn lint_fix<'a>(
         let stylist = Stylist::from_tokens(&tokens, &locator);
 
         // Extra indices from the code.
-        let indexer: Indexer = tokens.as_slice().into();
+        let indexer = Indexer::from_tokens(&tokens, &locator);
 
         // Extract the `# noqa` and `# isort: skip` directives from the source.
         let directives =

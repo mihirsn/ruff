@@ -38,12 +38,12 @@ pub fn star_arg_unpacking_after_keyword_arg(
         let ExprKind::Starred { .. } = arg.node else {
             continue;
         };
-        if arg.location <= keyword.location {
+        if arg.start() <= keyword.start() {
             continue;
         }
         checker.diagnostics.push(Diagnostic::new(
             StarArgUnpackingAfterKeywordArg,
-            Range::from(arg),
+            arg.range(),
         ));
     }
 }

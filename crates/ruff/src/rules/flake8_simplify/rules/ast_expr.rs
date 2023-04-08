@@ -85,7 +85,7 @@ pub fn use_capital_environment_variables(checker: &mut Checker, expr: &Expr) {
             expected: capital_env_var.clone(),
             original: env_var.clone(),
         },
-        Range::from(arg),
+        arg.range(),
     );
     if checker.patch(diagnostic.kind.rule()) {
         let new_env_var = create_expr(ExprKind::Constant {
@@ -191,7 +191,7 @@ pub fn dict_get_with_none_default(checker: &mut Checker, expr: &Expr) {
             expected: expected.clone(),
             original,
         },
-        Range::from(expr),
+        expr.range(),
     );
 
     if checker.patch(diagnostic.kind.rule()) {

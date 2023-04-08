@@ -22,9 +22,8 @@ pub fn pass_statement_stub_body(checker: &mut Checker, body: &[Stmt]) {
         return;
     }
     if matches!(body[0].node, StmtKind::Pass) {
-        checker.diagnostics.push(Diagnostic::new(
-            PassStatementStubBody,
-            Range::from(&body[0]),
-        ));
+        checker
+            .diagnostics
+            .push(Diagnostic::new(PassStatementStubBody, body[0].range()));
     }
 }

@@ -60,7 +60,7 @@ fn is_constant_like(expr: &Expr) -> bool {
 
 /// Generate a fix to reverse a comparison.
 fn reverse_comparison(expr: &Expr, locator: &Locator, stylist: &Stylist) -> Result<String> {
-    let range = Range::from(expr);
+    let range = expr.range();
     let contents = locator.slice(range);
 
     let mut expression = match_expression(contents)?;
@@ -159,7 +159,7 @@ pub fn yoda_conditions(
             YodaConditions {
                 suggestion: Some(suggestion.to_string()),
             },
-            Range::from(expr),
+            expr.range(),
         );
         if checker.patch(diagnostic.kind.rule()) {
             diagnostic.set_fix(Edit::replacement(suggestion, expr.location, expr.end()));
@@ -168,7 +168,7 @@ pub fn yoda_conditions(
     } else {
         checker.diagnostics.push(Diagnostic::new(
             YodaConditions { suggestion: None },
-            Range::from(expr),
+            expr.range(),
         ));
     }
 }

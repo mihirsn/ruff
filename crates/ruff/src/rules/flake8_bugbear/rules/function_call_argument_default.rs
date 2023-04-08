@@ -1,3 +1,4 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{Arguments, Constant, Expr, ExprKind};
 
 use ruff_diagnostics::Violation;
@@ -61,7 +62,7 @@ fn is_immutable_func(checker: &Checker, func: &Expr, extend_immutable_calls: &[C
 
 struct ArgumentDefaultVisitor<'a> {
     checker: &'a Checker<'a>,
-    diagnostics: Vec<(DiagnosticKind, Range)>,
+    diagnostics: Vec<(DiagnosticKind, TextRange)>,
     extend_immutable_calls: Vec<CallPath<'a>>,
 }
 
@@ -81,7 +82,7 @@ where
                             name: compose_call_path(func),
                         }
                         .into(),
-                        Range::from(expr),
+                        expr.range(),
                     ));
                 }
                 visitor::walk_expr(self, expr);

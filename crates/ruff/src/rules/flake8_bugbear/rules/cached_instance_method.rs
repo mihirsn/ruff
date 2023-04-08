@@ -51,10 +51,9 @@ pub fn cached_instance_method(checker: &mut Checker, decorator_list: &[Expr]) {
                 _ => decorator,
             },
         ) {
-            checker.diagnostics.push(Diagnostic::new(
-                CachedInstanceMethod,
-                Range::from(decorator),
-            ));
+            checker
+                .diagnostics
+                .push(Diagnostic::new(CachedInstanceMethod, decorator.range()));
         }
     }
 }

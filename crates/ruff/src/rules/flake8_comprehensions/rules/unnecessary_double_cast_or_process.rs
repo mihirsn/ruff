@@ -1,3 +1,4 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{Expr, ExprKind};
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic};
@@ -71,7 +72,7 @@ pub fn unnecessary_double_cast_or_process(
     func: &Expr,
     args: &[Expr],
 ) {
-    fn create_diagnostic(inner: &str, outer: &str, location: Range) -> Diagnostic {
+    fn create_diagnostic(inner: &str, outer: &str, location: TextRange) -> Diagnostic {
         Diagnostic::new(
             UnnecessaryDoubleCastOrProcess {
                 inner: inner.to_string(),
@@ -113,7 +114,7 @@ pub fn unnecessary_double_cast_or_process(
         || (outer == "set" && inner == "set")
         || ((outer == "list" || outer == "tuple") && (inner == "list" || inner == "tuple"))
     {
-        let mut diagnostic = create_diagnostic(inner, outer, Range::from(expr));
+        let mut diagnostic = create_diagnostic(inner, outer, expr.range());
         if checker.patch(diagnostic.kind.rule()) {
             diagnostic.try_set_fix(|| {
                 fixes::fix_unnecessary_double_cast_or_process(

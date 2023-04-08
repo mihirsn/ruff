@@ -446,7 +446,7 @@ fn check_dynamically_typed<F>(
     if checker.ctx.match_typing_expr(annotation, "Any") {
         diagnostics.push(Diagnostic::new(
             AnyType { name: func() },
-            Range::from(annotation),
+            annotation.range(),
         ));
     };
 }
@@ -513,7 +513,7 @@ pub fn definition(
                             MissingTypeFunctionArgument {
                                 name: arg.node.arg.to_string(),
                             },
-                            Range::from(arg),
+                            arg.range(),
                         ));
                     }
                 }
@@ -544,7 +544,7 @@ pub fn definition(
                             MissingTypeArgs {
                                 name: arg.node.arg.to_string(),
                             },
-                            Range::from(arg),
+                            arg.range(),
                         ));
                     }
                 }
@@ -575,7 +575,7 @@ pub fn definition(
                             MissingTypeKwargs {
                                 name: arg.node.arg.to_string(),
                             },
-                            Range::from(arg),
+                            arg.range(),
                         ));
                     }
                 }
@@ -592,7 +592,7 @@ pub fn definition(
                                 MissingTypeCls {
                                     name: arg.node.arg.to_string(),
                                 },
-                                Range::from(arg),
+                                arg.range(),
                             ));
                         }
                     } else {
@@ -601,7 +601,7 @@ pub fn definition(
                                 MissingTypeSelf {
                                     name: arg.node.arg.to_string(),
                                 },
-                                Range::from(arg),
+                                arg.range(),
                             ));
                         }
                     }

@@ -64,5 +64,5 @@ pub fn no_explicit_stacklevel(
 
     checker
         .diagnostics
-        .push(Diagnostic::new(NoExplicitStacklevel, Range::from(func)));
+        .push(Diagnostic::new(NoExplicitStacklevel, func.range()));
 }

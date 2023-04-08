@@ -38,7 +38,7 @@ pub fn snmp_weak_cryptography(
         if call_args.len() < 3 {
             checker
                 .diagnostics
-                .push(Diagnostic::new(SnmpWeakCryptography, Range::from(func)));
+                .push(Diagnostic::new(SnmpWeakCryptography, func.range()));
         }
     }
 }

@@ -97,7 +97,7 @@ pub fn explicit_true_false_in_ifexpr(
         IfExprWithTrueFalse {
             expr: unparse_expr(test, checker.stylist),
         },
-        Range::from(expr),
+        expr.range(),
     );
     if checker.patch(diagnostic.kind.rule()) {
         if matches!(test.node, ExprKind::Compare { .. }) {
@@ -152,7 +152,7 @@ pub fn explicit_false_true_in_ifexpr(
         IfExprWithFalseTrue {
             expr: unparse_expr(test, checker.stylist),
         },
-        Range::from(expr),
+        expr.range(),
     );
     if checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(
@@ -201,7 +201,7 @@ pub fn twisted_arms_in_ifexpr(
             expr_body: unparse_expr(body, checker.stylist),
             expr_else: unparse_expr(orelse, checker.stylist),
         },
-        Range::from(expr),
+        expr.range(),
     );
     if checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(

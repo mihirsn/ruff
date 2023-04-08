@@ -189,21 +189,21 @@ pub fn delete_stmt(
         // it with a `pass`.
         Ok(Edit::replacement(
             "pass".to_string(),
-            stmt.location,
+            stmt.start(),
             stmt.end(),
         ))
     } else {
         Ok(if let Some(semicolon) = trailing_semicolon(stmt, locator) {
             let next = next_stmt_break(semicolon, locator);
-            Edit::deletion(stmt.location, next)
-        } else if helpers::match_leading_content(stmt, locator) {
-            Edit::deletion(stmt.location, stmt.end())
+            Edit::deletion(stmt.start(), next)
+        } else if helpers::has_leading_content(stmt, locator) {
+            Edit::deletion(stmt.start(), stmt.end())
         } else if helpers::preceded_by_continuation(stmt, indexer) {
             if is_end_of_file(stmt, locator) && stmt.location.column() == 0 {
                 // Special-case: a file can't end in a continuation.
-                Edit::replacement(stylist.line_ending().to_string(), stmt.location, stmt.end())
+                Edit::replacement(stylist.line_ending().to_string(), stmt.start(), stmt.end())
             } else {
-                Edit::deletion(stmt.location, stmt.end())
+                Edit::deletion(stmt.start(), stmt.end())
             }
         } else {
             Edit::deletion(
@@ -393,8 +393,8 @@ pub fn remove_argument(
         }
     } else if args
         .iter()
-        .map(|node| node.location)
-        .chain(keywords.iter().map(|node| node.location))
+        .map(|node| node.start())
+        .chain(keywords.iter().map(|node| node.start()))
         .any(|location| location > expr_at)
     {
         // Case 2: argument or keyword is _not_ the last node.
@@ -477,7 +477,7 @@ pub fn get_or_import_symbol(
         // `sys-exit-alias` fix, and thus will avoid applying both fixes in the same pass.
         let import_edit = Edit::replacement(
             locator.slice(source).to_string(),
-            source.location,
+            source.start(),
             source.end(),
         );
         Ok((import_edit, binding))

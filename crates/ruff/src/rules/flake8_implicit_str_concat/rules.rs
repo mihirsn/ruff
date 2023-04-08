@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{Constant, Expr, ExprKind, Operator};
 use rustpython_parser::lexer::LexResult;
 use rustpython_parser::Tok;
@@ -133,18 +134,12 @@ pub fn implicit(tokens: &[LexResult], settings: &Settings) -> Vec<Diagnostic> {
             if a_end.row() == b_start.row() {
                 diagnostics.push(Diagnostic::new(
                     SingleLineImplicitStringConcatenation,
-                    Range {
-                        location: *a_start,
-                        end_location: *b_end,
-                    },
+                    TextRange::new(*a_start, *b_end),
                 ));
             } else {
                 diagnostics.push(Diagnostic::new(
                     MultiLineImplicitStringConcatenation,
-                    Range {
-                        location: *a_start,
-                        end_location: *b_end,
-                    },
+                    TextRange::new(*a_start, *b_end),
                 ));
             }
         }
@@ -171,10 +166,7 @@ pub fn explicit(expr: &Expr) -> Option<Diagnostic> {
                         ..
                     }
             ) {
-                return Some(Diagnostic::new(
-                    ExplicitStringConcatenation,
-                    Range::from(expr),
-                ));
+                return Some(Diagnostic::new(ExplicitStringConcatenation, expr.range()));
             }
         }
     }

@@ -95,7 +95,7 @@ fn duplicate_handler_exceptions<'a>(
                         .sorted()
                         .collect::<Vec<String>>(),
                 },
-                Range::from(expr),
+                expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 diagnostic.set_fix(Edit::replacement(
@@ -104,7 +104,7 @@ fn duplicate_handler_exceptions<'a>(
                     } else {
                         unparse_expr(&type_pattern(unique_elts), checker.stylist)
                     },
-                    expr.location,
+                    expr.start(),
                     expr.end(),
                 ));
             }
@@ -156,7 +156,7 @@ pub fn duplicate_exceptions(checker: &mut Checker, handlers: &[Excepthandler]) {
                     DuplicateTryBlockException {
                         name: name.join("."),
                     },
-                    Range::from(expr),
+                    expr.range(),
                 ));
             }
         }

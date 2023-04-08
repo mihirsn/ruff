@@ -5,7 +5,6 @@ use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit, Fix};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::find_keyword;
 use ruff_python_ast::source_code::Locator;
-use ruff_python_ast::types::Range;
 
 use crate::autofix::actions::remove_argument;
 use crate::checkers::ast::Checker;
@@ -34,7 +33,7 @@ fn generate_fix(
     stdout: &Keyword,
     stderr: &Keyword,
 ) -> Result<Fix> {
-    let (first, second) = if stdout.location < stderr.location {
+    let (first, second) = if stdout.start() < stderr.start() {
         (stdout, stderr)
     } else {
         (stderr, stdout)
@@ -42,13 +41,13 @@ fn generate_fix(
     Ok(Fix::new(vec![
         Edit::replacement(
             "capture_output=True".to_string(),
-            first.location,
+            first.start(),
             first.end(),
         ),
         remove_argument(
             locator,
-            func.location,
-            second.location,
+            func.start(),
+            second.start(),
             second.end(),
             args,
             keywords,
@@ -97,7 +96,7 @@ pub fn replace_stdout_stderr(
             return;
         }
 
-        let mut diagnostic = Diagnostic::new(ReplaceStdoutStderr, Range::from(expr));
+        let mut diagnostic = Diagnostic::new(ReplaceStdoutStderr, expr.range());
         if checker.patch(diagnostic.kind.rule()) {
             diagnostic.try_set_fix(|| {
                 generate_fix(checker.locator, func, args, keywords, stdout, stderr)

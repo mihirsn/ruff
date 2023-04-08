@@ -1,3 +1,4 @@
+use ruff_text_size::TextRange;
 use std::path::{Path, PathBuf};
 
 use ruff_diagnostics::{Diagnostic, Violation};
@@ -64,7 +65,7 @@ pub fn implicit_namespace_package(
             ImplicitNamespacePackage {
                 filename: fs::relativize_path(path),
             },
-            Range::default(),
+            TextRange::default(),
         ))
     } else {
         None

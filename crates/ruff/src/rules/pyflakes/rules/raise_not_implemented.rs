@@ -45,7 +45,7 @@ pub fn raise_not_implemented(checker: &mut Checker, expr: &Expr) {
     let Some(expr) = match_not_implemented(expr) else {
         return;
     };
-    let mut diagnostic = Diagnostic::new(RaiseNotImplemented, Range::from(expr));
+    let mut diagnostic = Diagnostic::new(RaiseNotImplemented, expr.range());
     if checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(
             "NotImplementedError".to_string(),

@@ -68,7 +68,7 @@ where
         if i > 0 && is_receiver && !seen_receiver {
             diagnostics.push(Diagnostic::new(
                 DjangoNonLeadingReceiverDecorator,
-                Range::from(decorator),
+                decorator.range(),
             ));
         }
         if !is_receiver && seen_receiver {

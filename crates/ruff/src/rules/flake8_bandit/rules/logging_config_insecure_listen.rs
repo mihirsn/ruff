@@ -34,10 +34,9 @@ pub fn logging_config_insecure_listen(
         let call_args = SimpleCallArgs::new(args, keywords);
 
         if call_args.keyword_argument("verify").is_none() {
-            checker.diagnostics.push(Diagnostic::new(
-                LoggingConfigInsecureListen,
-                Range::from(func),
-            ));
+            checker
+                .diagnostics
+                .push(Diagnostic::new(LoggingConfigInsecureListen, func.range()));
         }
     }
 }

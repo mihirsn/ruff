@@ -73,7 +73,7 @@ pub fn nullable_model_string_field(checker: &Checker, body: &[Stmt]) -> Vec<Diag
                 DjangoNullableModelStringField {
                     field_name: field_name.to_string(),
                 },
-                Range::from(value),
+                value.range(),
             ));
         }
     }

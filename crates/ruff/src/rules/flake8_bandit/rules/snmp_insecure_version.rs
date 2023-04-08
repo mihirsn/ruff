@@ -40,10 +40,9 @@ pub fn snmp_insecure_version(
             } = &mp_model_arg.node
             {
                 if value.is_zero() || value.is_one() {
-                    checker.diagnostics.push(Diagnostic::new(
-                        SnmpInsecureVersion,
-                        Range::from(mp_model_arg),
-                    ));
+                    checker
+                        .diagnostics
+                        .push(Diagnostic::new(SnmpInsecureVersion, mp_model_arg.range()));
                 }
             }
         }

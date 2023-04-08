@@ -1,9 +1,8 @@
+use ruff_text_size::{TextRange, TextSize};
 use rustc_hash::FxHashMap;
 use rustpython_parser::ast::Location;
 use rustpython_parser::lexer::LexResult;
 use rustpython_parser::Tok;
-
-use ruff_python_ast::types::Range;
 
 use crate::cst::{
     Alias, Arg, Body, BoolOp, CmpOp, Excepthandler, ExcepthandlerKind, Expr, ExprKind, Keyword,
@@ -48,26 +47,26 @@ impl Node<'_> {
         }
     }
 
-    pub fn location(&self) -> Location {
+    pub const fn start(&self) -> TextSize {
         match self {
-            Node::Alias(node) => node.location,
-            Node::Arg(node) => node.location,
-            Node::Body(node) => node.location,
-            Node::BoolOp(node) => node.location,
-            Node::CmpOp(node) => node.location,
-            Node::Excepthandler(node) => node.location,
-            Node::Expr(node) => node.location,
-            Node::Keyword(node) => node.location,
+            Node::Alias(node) => node.start(),
+            Node::Arg(node) => node.start(),
+            Node::Body(node) => node.start(),
+            Node::BoolOp(node) => node.start(),
+            Node::CmpOp(node) => node.start(),
+            Node::Excepthandler(node) => node.start(),
+            Node::Expr(node) => node.start(),
+            Node::Keyword(node) => node.start(),
             Node::Mod(..) => unreachable!("Node::Mod cannot be a child node"),
-            Node::Operator(node) => node.location,
-            Node::Pattern(node) => node.location,
-            Node::SliceIndex(node) => node.location,
-            Node::Stmt(node) => node.location,
-            Node::UnaryOp(node) => node.location,
+            Node::Operator(node) => node.start(),
+            Node::Pattern(node) => node.start(),
+            Node::SliceIndex(node) => node.start(),
+            Node::Stmt(node) => node.start(),
+            Node::UnaryOp(node) => node.start(),
         }
     }
 
-    pub fn end_location(&self) -> Location {
+    pub fn end(&self) -> TextSize {
         match self {
             Node::Alias(node) => node.end(),
             Node::Arg(node) => node.end(),
@@ -115,7 +114,7 @@ pub enum TriviaKind {
     /// # This is an own-line comment.
     /// b = 2
     /// ```
-    OwnLineComment(Range),
+    OwnLineComment(TextRange),
     /// A comment that is on the same line as the preceding token.
     ///
     /// # Examples
@@ -126,7 +125,7 @@ pub enum TriviaKind {
     /// a = 1  # This is an end-of-line comment.
     /// b = 2
     /// ```
-    EndOfLineComment(Range),
+    EndOfLineComment(TextRange),
     MagicTrailingComma,
     EmptyLine,
     Parentheses,
@@ -167,11 +166,11 @@ impl Trivia {
                 relationship,
             },
             TriviaTokenKind::OwnLineComment => Self {
-                kind: TriviaKind::OwnLineComment(Range::new(token.start, token.end)),
+                kind: TriviaKind::OwnLineComment(TextRange::new(token.start, token.end)),
                 relationship,
             },
             TriviaTokenKind::EndOfLineComment => Self {
-                kind: TriviaKind::EndOfLineComment(Range::new(token.start, token.end)),
+                kind: TriviaKind::EndOfLineComment(TextRange::new(token.start, token.end)),
                 relationship,
             },
             TriviaTokenKind::Parentheses => Self {
@@ -185,13 +184,13 @@ impl Trivia {
 pub fn extract_trivia_tokens(lxr: &[LexResult]) -> Vec<TriviaToken> {
     let mut tokens = vec![];
     let mut prev_tok: Option<(&Location, &Tok, &Location)> = None;
-    let mut prev_non_newline_tok: Option<(&Location, &Tok, &Location)> = None;
+    let mut prev_non_newline_tok: Option<TextRange> = None;
     let mut prev_semantic_tok: Option<(&Location, &Tok, &Location)> = None;
     let mut parens = vec![];
     for (start, tok, end) in lxr.iter().flatten() {
         // Add empty lines.
-        if let Some((.., prev)) = prev_non_newline_tok {
-            for row in prev.row() + 1..start.row() {
+        if let Some(prev_range) = prev_non_newline_tok {
+            for row in prev_range.end().row() + 1..start.row() {
                 tokens.push(TriviaToken {
                     start: Location::new(row, 0),
                     end: Location::new(row + 1, 0),
@@ -205,7 +204,9 @@ pub fn extract_trivia_tokens(lxr: &[LexResult]) -> Vec<TriviaToken> {
             tokens.push(TriviaToken {
                 start: *start,
                 end: *end,
-                kind: if prev_non_newline_tok.map_or(true, |(prev, ..)| prev.row() < start.row()) {
+                kind: if prev_non_newline_tok
+                    .map_or(true, |(prev_range)| prev_range.start().row() < start.row())
+                {
                     TriviaTokenKind::OwnLineComment
                 } else {
                     TriviaTokenKind::EndOfLineComment
@@ -259,7 +260,7 @@ pub fn extract_trivia_tokens(lxr: &[LexResult]) -> Vec<TriviaToken> {
 
         // Track the most recent non-whitespace token.
         if !matches!(tok, Tok::Newline | Tok::NonLogicalNewline) {
-            prev_non_newline_tok = Some((start, tok, end));
+            prev_non_newline_tok = Some(TextRange::new(*start, *end));
         }
 
         // Track the most recent semantic token.
@@ -766,14 +767,14 @@ pub fn decorate_token<'a>(
     while left < right {
         let middle = (left + right) / 2;
         let child = &child_nodes[middle];
-        let start = child.location();
-        let end = child.end_location();
+        let start = child.start();
+        let end = child.end();
 
         if let Some(existing) = &enclosed_node {
             // Special-case: if we're dealing with a statement that's a single expression,
             // we want to treat the expression as the enclosed node.
-            let existing_start = existing.location();
-            let existing_end = existing.end_location();
+            let existing_start = existing.start();
+            let existing_end = existing.end();
             if start == existing_start && end == existing_end {
                 enclosed_node = Some(child.clone());
             }

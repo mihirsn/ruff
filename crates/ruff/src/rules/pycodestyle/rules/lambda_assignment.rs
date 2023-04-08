@@ -2,7 +2,7 @@ use rustpython_parser::ast::{Arguments, Expr, ExprKind, Location, Stmt, StmtKind
 
 use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::helpers::{match_leading_content, match_trailing_content, unparse_stmt};
+use ruff_python_ast::helpers::{has_leading_content, has_trailing_content, unparse_stmt};
 use ruff_python_ast::newlines::StrExt;
 use ruff_python_ast::source_code::Stylist;
 use ruff_python_ast::types::Range;
@@ -73,13 +73,13 @@ pub fn lambda_assignment(checker: &mut Checker, target: &Expr, value: &Expr, stm
                     name: id.to_string(),
                     fixable,
                 },
-                Range::from(stmt),
+                stmt.range(),
             );
 
             if checker.patch(diagnostic.kind.rule())
                 && fixable
-                && !match_leading_content(stmt, checker.locator)
-                && !match_trailing_content(stmt, checker.locator)
+                && !has_leading_content(stmt, checker.locator)
+                && !has_trailing_content(stmt, checker.locator)
             {
                 let first_line = checker.locator.slice(Range::new(
                     Location::new(stmt.location.row(), 0),

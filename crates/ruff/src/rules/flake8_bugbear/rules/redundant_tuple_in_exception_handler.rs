@@ -45,12 +45,12 @@ pub fn redundant_tuple_in_exception_handler(checker: &mut Checker, handlers: &[E
             RedundantTupleInExceptionHandler {
                 name: unparse_expr(elt, checker.stylist),
             },
-            Range::from(type_),
+            type_.range(),
         );
         if checker.patch(diagnostic.kind.rule()) {
             diagnostic.set_fix(Edit::replacement(
                 unparse_expr(elt, checker.stylist),
-                type_.location,
+                type_.start(),
                 type_.end(),
             ));
         }

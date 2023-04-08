@@ -2,7 +2,6 @@ use rustpython_parser::ast::{Constant, Expr, ExprKind};
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 
@@ -49,7 +48,7 @@ pub fn raise_vanilla_args(checker: &mut Checker, expr: &Expr) {
             if any_string(arg, |part| part.chars().any(char::is_whitespace)) {
                 checker
                     .diagnostics
-                    .push(Diagnostic::new(RaiseVanillaArgs, Range::from(expr)));
+                    .push(Diagnostic::new(RaiseVanillaArgs, expr.range()));
             }
         }
     }

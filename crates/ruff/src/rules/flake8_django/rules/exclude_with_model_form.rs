@@ -68,10 +68,7 @@ pub fn exclude_with_model_form(
                     continue;
                 };
                 if id == "exclude" {
-                    return Some(Diagnostic::new(
-                        DjangoExcludeWithModelForm,
-                        Range::from(target),
-                    ));
+                    return Some(Diagnostic::new(DjangoExcludeWithModelForm, target.range()));
                 }
             }
         }

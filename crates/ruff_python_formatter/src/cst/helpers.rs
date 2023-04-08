@@ -1,8 +1,5 @@
-use rustpython_parser::ast::Location;
-
 use ruff_python_ast::newlines::StrExt;
 use ruff_python_ast::source_code::Locator;
-use ruff_python_ast::types::Range;
 use ruff_text_size::TextRange;
 
 /// Return `true` if the given string is a radix literal (e.g., `0b101`).
@@ -17,48 +14,38 @@ pub fn is_radix_literal(content: &str) -> bool {
 
 /// Find the first token in the given range that satisfies the given predicate.
 pub fn find_tok(
-    location: Location,
-    end_location: Location,
+    range: TextRange,
     locator: &Locator,
     f: impl Fn(rustpython_parser::Tok) -> bool,
-) -> (Location, Location) {
+) -> TextRange {
     for (start, tok, end) in rustpython_parser::lexer::lex_located(
-        locator.slice(Range::new(location, end_location)),
+        &locator.contents()[range],
         rustpython_parser::Mode::Module,
-        location,
+        range.start(),
     )
     .flatten()
     {
         if f(tok) {
-            return (start, end);
+            return TextRange::new(start, end);
         }
     }
-    unreachable!(
-        "Failed to find token in range {:?}..{:?}",
-        location, end_location
-    )
+    unreachable!("Failed to find token in range {:?}", range)
 }
 
 /// Expand the range of a compound statement.
 ///
 /// `location` is the start of the compound statement (e.g., the `if` in `if x:`).
 /// `end_location` is the end of the last statement in the body.
-pub fn expand_indented_block(
-    location: Location,
-    end_location: Location,
-    locator: &Locator,
-) -> (Location, Location) {
+pub fn expand_indented_block(range: TextRange, locator: &Locator) -> TextRange {
     let contents = locator.contents();
-    let start_index = locator.offset(location);
-    let end_index = locator.offset(end_location);
 
     // Find the colon, which indicates the end of the header.
     let mut nesting = 0;
     let mut colon = None;
     for (start, tok, _end) in rustpython_parser::lexer::lex_located(
-        &contents[TextRange::new(start_index, end_index)],
+        &contents[range],
         rustpython_parser::Mode::Module,
-        location,
+        range.start(),
     )
     .flatten()
     {
@@ -77,11 +64,10 @@ pub fn expand_indented_block(
         }
     }
     let colon_location = colon.unwrap();
-    let colon_index = locator.offset(colon_location);
 
     // From here, we have two options: simple statement or compound statement.
     let indent = rustpython_parser::lexer::lex_located(
-        &contents[TextRange::new(colon_index, end_index)],
+        &contents[TextRange::new(colon_location, range.end())],
         rustpython_parser::Mode::Module,
         colon_location,
     )
@@ -91,14 +77,16 @@ pub fn expand_indented_block(
         _ => None,
     });
 
+    let line_end = locator.line_end(range.end());
+
     let Some(indent_location) = indent else {
         // Simple statement: from the colon to the end of the line.
-        return (colon_location, Location::new(end_location.row() + 1, 0));
+        return TextRange::new(colon_location, line_end);
     };
 
     // Compound statement: from the colon to the end of the block.
     let mut offset = 0;
-    for (index, line) in contents[usize::from(end_index)..]
+    for (index, line) in contents[usize::from(range.end())..]
         .universal_newlines()
         .skip(1)
         .enumerate()
@@ -107,9 +95,8 @@ pub fn expand_indented_block(
             continue;
         }
 
-        if line
+        if line[TextRange::up_to(indent_location)]
             .chars()
-            .take(indent_location.column())
             .all(char::is_whitespace)
         {
             offset = index + 1;
@@ -118,14 +105,13 @@ pub fn expand_indented_block(
         }
     }
 
-    let end_location = Location::new(end_location.row() + 1 + offset, 0);
-    (colon_location, end_location)
+    TextRange::new(colon_location, line_end)
 }
 
 /// Return true if the `orelse` block of an `if` statement is an `elif` statement.
 pub fn is_elif(orelse: &[rustpython_parser::ast::Stmt], locator: &Locator) -> bool {
     if orelse.len() == 1 && matches!(orelse[0].node, rustpython_parser::ast::StmtKind::If { .. }) {
-        let contents = locator.after(orelse[0].location);
+        let contents = locator.after(orelse[0].end());
         if contents.starts_with("elif") {
             return true;
         }

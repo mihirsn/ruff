@@ -41,7 +41,7 @@ impl Display for Diff<'_> {
         for edit in self.fix.edits() {
             let edit_range = self
                 .source_code
-                .text_range(Range::new(edit.location(), edit.end_location()));
+                .text_range(Range::new(edit.start(), edit.end()));
             output.push_str(&self.source_code.text()[TextRange::new(last_end, edit_range.start())]);
             output.push_str(edit.content().unwrap_or_default());
             last_end = edit_range.end();

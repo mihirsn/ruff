@@ -162,7 +162,7 @@ where
                             PytestAssertInExcept {
                                 name: id.to_string(),
                             },
-                            Range::from(current_assert),
+                            current_assert.range(),
                         ));
                     }
                 }
@@ -196,13 +196,13 @@ pub fn unittest_assertion(
                 // the assertion is part of a larger expression.
                 let fixable = checker.ctx.current_expr_parent().is_none()
                     && matches!(checker.ctx.current_stmt().node, StmtKind::Expr { .. })
-                    && !has_comments_in(Range::from(expr), checker.locator);
+                    && !has_comments_in(expr.range(), checker.locator);
                 let mut diagnostic = Diagnostic::new(
                     PytestUnittestAssertion {
                         assertion: unittest_assert.to_string(),
                         fixable,
                     },
-                    Range::from(func),
+                    func.range(),
                 );
                 if fixable && checker.patch(diagnostic.kind.rule()) {
                     if let Ok(stmt) = unittest_assert.generate_assert(args, keywords) {
@@ -225,7 +225,7 @@ pub fn unittest_assertion(
 /// PT015
 pub fn assert_falsy(stmt: &Stmt, test: &Expr) -> Option<Diagnostic> {
     if is_falsy_constant(test) {
-        Some(Diagnostic::new(PytestAssertAlwaysFalse, Range::from(stmt)))
+        Some(Diagnostic::new(PytestAssertAlwaysFalse, stmt.range()))
     } else {
         None
     }
@@ -432,9 +432,8 @@ pub fn composite_condition(checker: &mut Checker, stmt: &Stmt, test: &Expr, msg:
     if matches!(composite, CompositionKind::Simple | CompositionKind::Mixed) {
         let fixable = matches!(composite, CompositionKind::Simple)
             && msg.is_none()
-            && !has_comments_in(Range::from(stmt), checker.locator);
-        let mut diagnostic =
-            Diagnostic::new(PytestCompositeAssertion { fixable }, Range::from(stmt));
+            && !has_comments_in(stmt.range(), checker.locator);
+        let mut diagnostic = Diagnostic::new(PytestCompositeAssertion { fixable }, stmt.range());
         if fixable && checker.patch(diagnostic.kind.rule()) {
             diagnostic
                 .try_set_fix(|| fix_composite_condition(stmt, checker.locator, checker.stylist));

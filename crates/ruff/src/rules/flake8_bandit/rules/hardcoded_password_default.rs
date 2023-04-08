@@ -29,7 +29,7 @@ fn check_password_kwarg(arg: &Arg, default: &Expr) -> Option<Diagnostic> {
         HardcodedPasswordDefault {
             string: string.to_string(),
         },
-        Range::from(default),
+        default.range(),
     ))
 }
 

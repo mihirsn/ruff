@@ -35,5 +35,5 @@ pub fn assignment_to_os_environ(checker: &mut Checker, targets: &[Expr]) {
     }
     checker
         .diagnostics
-        .push(Diagnostic::new(AssignmentToOsEnviron, Range::from(target)));
+        .push(Diagnostic::new(AssignmentToOsEnviron, target.range()));
 }

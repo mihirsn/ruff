@@ -28,12 +28,12 @@ pub fn fail_call(checker: &mut Checker, func: &Expr, args: &[Expr], keywords: &[
             if is_empty_or_null_string(msg) {
                 checker
                     .diagnostics
-                    .push(Diagnostic::new(PytestFailWithoutMessage, Range::from(func)));
+                    .push(Diagnostic::new(PytestFailWithoutMessage, func.range()));
             }
         } else {
             checker
                 .diagnostics
-                .push(Diagnostic::new(PytestFailWithoutMessage, Range::from(func)));
+                .push(Diagnostic::new(PytestFailWithoutMessage, func.range()));
         }
     }
 }

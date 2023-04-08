@@ -269,7 +269,7 @@ pub(crate) fn f_strings(checker: &mut Checker, summary: &FormatSummary, expr: &E
         }
     }
 
-    let mut diagnostic = Diagnostic::new(FString, Range::from(expr));
+    let mut diagnostic = Diagnostic::new(FString, expr.range());
     if checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(contents, expr.location, expr.end()));
     };

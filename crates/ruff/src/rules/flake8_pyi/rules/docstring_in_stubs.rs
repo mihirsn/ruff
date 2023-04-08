@@ -21,6 +21,6 @@ pub fn docstring_in_stubs(checker: &mut Checker, docstring: Option<&Expr>) {
     if let Some(docstr) = &docstring {
         checker
             .diagnostics
-            .push(Diagnostic::new(DocstringInStub, Range::from(*docstr)));
+            .push(Diagnostic::new(DocstringInStub, docstr.range()));
     }
 }

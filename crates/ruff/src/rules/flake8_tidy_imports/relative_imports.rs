@@ -166,7 +166,7 @@ pub fn banned_relative_import(
             RelativeImports {
                 strictness: *strictness,
             },
-            Range::from(stmt),
+            stmt.range(),
         );
         if checker.patch(diagnostic.kind.rule()) {
             if let Some(fix) =

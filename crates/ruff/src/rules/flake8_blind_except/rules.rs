@@ -84,7 +84,7 @@ pub fn blind_except(
                 BlindExcept {
                     name: id.to_string(),
                 },
-                Range::from(type_),
+                type_.range(),
             ));
         }
     }

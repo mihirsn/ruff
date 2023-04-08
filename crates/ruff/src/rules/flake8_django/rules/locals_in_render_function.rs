@@ -80,7 +80,7 @@ pub fn locals_in_render_function(
 
     checker.diagnostics.push(Diagnostic::new(
         DjangoLocalsInRenderFunction,
-        Range::from(locals),
+        locals.range(),
     ));
 }
 

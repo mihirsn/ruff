@@ -22,7 +22,7 @@ pub fn use_of_pd_merge(func: &Expr) -> Option<Diagnostic> {
     if let ExprKind::Attribute { attr, value, .. } = &func.node {
         if let ExprKind::Name { id, .. } = &value.node {
             if id == "pd" && attr == "merge" {
-                return Some(Diagnostic::new(PandasUseOfPdMerge, Range::from(func)));
+                return Some(Diagnostic::new(PandasUseOfPdMerge, func.range()));
             }
         }
     }

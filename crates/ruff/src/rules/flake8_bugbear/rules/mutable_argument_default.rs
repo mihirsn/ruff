@@ -168,10 +168,9 @@ pub fn mutable_argument_default(checker: &mut Checker, arguments: &Arguments) {
                 .as_ref()
                 .map_or(false, |expr| is_immutable_annotation(checker, expr))
         {
-            checker.diagnostics.push(Diagnostic::new(
-                MutableArgumentDefault,
-                Range::from(default),
-            ));
+            checker
+                .diagnostics
+                .push(Diagnostic::new(MutableArgumentDefault, default.range()));
         }
     }
 }
