@@ -1,7 +1,6 @@
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::{NewlineWithTrailingNewline, StrExt};
-use ruff_python_ast::types::Range;
 use ruff_python_ast::whitespace;
 
 use crate::checkers::ast::Checker;
@@ -37,7 +36,7 @@ pub fn newline_after_last_paragraph(checker: &mut Checker, docstring: &Docstring
             if let Some(last_line) = contents.universal_newlines().last().map(str::trim) {
                 if last_line != "\"\"\"" && last_line != "'''" {
                     let mut diagnostic =
-                        Diagnostic::new(NewLineAfterLastParagraph, Range::from(docstring.expr));
+                        Diagnostic::new(NewLineAfterLastParagraph, docstring.expr.range());
                     if checker.patch(diagnostic.kind.rule()) {
                         // Insert a newline just before the end-quote(s).
                         let num_trailing_quotes = "'''".len();

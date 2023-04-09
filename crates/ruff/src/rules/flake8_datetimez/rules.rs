@@ -4,7 +4,6 @@ use rustpython_parser::ast::{Constant, Expr, ExprKind, Keyword};
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::{has_non_none_keyword, is_const_none};
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 

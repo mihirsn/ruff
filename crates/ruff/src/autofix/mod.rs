@@ -1,12 +1,12 @@
 use std::collections::BTreeSet;
 
 use itertools::Itertools;
+use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{Diagnostic, Edit, Fix};
 use ruff_python_ast::source_code::Locator;
-use ruff_python_ast::types::Range;
 
 use crate::linter::FixTable;
 use crate::registry::{AsRule, Rule};
@@ -65,7 +65,7 @@ fn apply_fixes<'a>(
 
         for edit in fix.edits() {
             // Add all contents from `last_pos` to `fix.location`.
-            let slice = locator.slice(Range::new(last_pos.unwrap_or_default(), edit.start()));
+            let slice = locator.slice(TextRange::new(last_pos.unwrap_or_default(), edit.start()));
             output.push_str(slice);
 
             // Add the patch itself.

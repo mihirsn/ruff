@@ -7,7 +7,6 @@ use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::comparable::{ComparableConstant, ComparableExpr};
 use ruff_python_ast::helpers::unparse_expr;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::registry::{AsRule, Rule};
@@ -106,7 +105,7 @@ pub fn repeated_keys(checker: &mut Checker, keys: &[Option<Expr>], values: &[Exp
                                     name: unparse_expr(key, checker.stylist),
                                     repeated_value: is_duplicate_value,
                                 },
-                                Range::from(key),
+                                key.range(),
                             );
                             if is_duplicate_value {
                                 if checker.patch(diagnostic.kind.rule()) {
@@ -134,7 +133,7 @@ pub fn repeated_keys(checker: &mut Checker, keys: &[Option<Expr>], values: &[Exp
                                     name: dict_key.to_string(),
                                     repeated_value: is_duplicate_value,
                                 },
-                                Range::from(key),
+                                key.range(),
                             );
                             if is_duplicate_value {
                                 if checker.patch(diagnostic.kind.rule()) {

@@ -6,7 +6,6 @@ use ruff_diagnostics::{Diagnostic, DiagnosticKind};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::call_path::from_qualified_name;
 use ruff_python_ast::call_path::{compose_call_path, CallPath};
-use ruff_python_ast::types::Range;
 use ruff_python_ast::visitor;
 use ruff_python_ast::visitor::Visitor;
 

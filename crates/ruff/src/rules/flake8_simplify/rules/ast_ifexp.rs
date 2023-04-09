@@ -3,7 +3,6 @@ use rustpython_parser::ast::{Constant, Expr, ExprContext, ExprKind, Unaryop};
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::{create_expr, unparse_expr};
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::registry::AsRule;
@@ -103,7 +102,7 @@ pub fn explicit_true_false_in_ifexpr(
         if matches!(test.node, ExprKind::Compare { .. }) {
             diagnostic.set_fix(Edit::replacement(
                 unparse_expr(&test.clone(), checker.stylist),
-                expr.location,
+                expr.start(),
                 expr.end(),
             ));
         } else if checker.ctx.is_builtin("bool") {
@@ -119,7 +118,7 @@ pub fn explicit_true_false_in_ifexpr(
                     }),
                     checker.stylist,
                 ),
-                expr.location,
+                expr.start(),
                 expr.end(),
             ));
         };
@@ -163,7 +162,7 @@ pub fn explicit_false_true_in_ifexpr(
                 }),
                 checker.stylist,
             ),
-            expr.location,
+            expr.start(),
             expr.end(),
         ));
     }
@@ -213,7 +212,7 @@ pub fn twisted_arms_in_ifexpr(
                 }),
                 checker.stylist,
             ),
-            expr.location,
+            expr.start(),
             expr.end(),
         ));
     }

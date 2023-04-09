@@ -3,7 +3,6 @@ use rustpython_parser::ast::{Alias, AliasData, Located, Stmt, StmtKind};
 use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::{create_stmt, unparse_stmt};
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::registry::AsRule;
@@ -51,7 +50,7 @@ pub fn manual_from_import(checker: &mut Checker, stmt: &Stmt, alias: &Alias, nam
             name: name.to_string(),
             fixable,
         },
-        Range::from(alias),
+        alias.range(),
     );
     if fixable && checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(
@@ -59,7 +58,7 @@ pub fn manual_from_import(checker: &mut Checker, stmt: &Stmt, alias: &Alias, nam
                 &create_stmt(StmtKind::ImportFrom {
                     module: Some(module.to_string()),
                     names: vec![Located::new(
-                        stmt.location,
+                        stmt.start(),
                         stmt.end(),
                         AliasData {
                             name: asname.into(),
@@ -70,7 +69,7 @@ pub fn manual_from_import(checker: &mut Checker, stmt: &Stmt, alias: &Alias, nam
                 }),
                 checker.stylist,
             ),
-            stmt.location,
+            stmt.start(),
             stmt.end(),
         ));
     }

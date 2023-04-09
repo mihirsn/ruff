@@ -16,7 +16,6 @@ use smallvec::SmallVec;
 use crate::call_path::CallPath;
 use crate::newlines::StrExt;
 use crate::source_code::{Generator, Indexer, Locator, Stylist};
-use crate::types::Range;
 use crate::visitor;
 use crate::visitor::Visitor;
 
@@ -958,7 +957,7 @@ pub fn find_names<'a, T>(
     located: &'a Located<T>,
     locator: &'a Locator,
 ) -> impl Iterator<Item = TextRange> + 'a {
-    let contents = locator.slice(located);
+    let contents = locator.slice(located.range());
 
     lexer::lex_located(contents, Mode::Module, located.start())
         .flatten()
@@ -1065,7 +1064,7 @@ pub fn elif_else_range(stmt: &Stmt, locator: &Locator) -> Option<TextRange> {
 
 /// Return `true` if a `Stmt` appears to be part of a multi-statement line, with
 /// other statements preceding it.
-pub fn preceded_by_continuation(stmt: &Stmt, indexer: &Indexer) -> bool {
+pub fn preceded_by_continuation(_stmt: &Stmt, _indexer: &Indexer) -> bool {
     // FIXME
     // stmt.location.row() > 1
     //     && indexer

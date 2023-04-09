@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use itertools::{EitherOrBoth, Itertools};
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{Location, Stmt};
 use textwrap::indent;
 
@@ -10,7 +11,6 @@ use ruff_python_ast::helpers::{
     count_trailing_lines, followed_by_multi_statement_line, preceded_by_multi_statement_line,
 };
 use ruff_python_ast::source_code::{Indexer, Locator, Stylist};
-use ruff_python_ast::types::Range;
 use ruff_python_ast::whitespace::leading_space;
 
 use crate::registry::AsRule;
@@ -51,15 +51,15 @@ impl AlwaysAutofixableViolation for UnsortedImports {
     }
 }
 
-fn extract_range(body: &[&Stmt]) -> Range {
-    let location = body.first().unwrap().location;
+fn extract_range(body: &[&Stmt]) -> TextRange {
+    let location = body.first().unwrap().start();
     let end_location = body.last().unwrap().end();
-    Range::new(location, end_location)
+    TextRange::new(location, end_location)
 }
 
-fn extract_indentation_range(body: &[&Stmt]) -> Range {
-    let location = body.first().unwrap().location;
-    Range::new(Location::new(location.row(), 0), location)
+fn extract_indentation_range(body: &[&Stmt]) -> TextRange {
+    let location = body.first().unwrap().start();
+    TextRange::new(Location::new(location.row(), 0), location)
 }
 
 /// Compares two strings, returning true if they are equal modulo whitespace
@@ -99,10 +99,7 @@ pub fn organize_imports(
 
     // Extract comments. Take care to grab any inline comments from the last line.
     let comments = comments::collect_comments(
-        Range::new(
-            range.location,
-            Location::new(range.end_location.row() + 1, 0),
-        ),
+        TextRange::new(range.start(), Location::new(range.end().row() + 1, 0)),
         locator,
     );
 
@@ -142,9 +139,9 @@ pub fn organize_imports(
     );
 
     // Expand the span the entire range, including leading and trailing space.
-    let range = Range::new(
-        Location::new(range.location.row(), 0),
-        Location::new(range.end_location.row() + 1 + num_trailing_lines, 0),
+    let range = TextRange::new(
+        Location::new(range.start().row(), 0),
+        Location::new(range.end().row() + 1 + num_trailing_lines, 0),
     );
     let actual = locator.slice(range);
     if matches_ignoring_indentation(actual, &expected) {
@@ -154,8 +151,8 @@ pub fn organize_imports(
         if autofix.into() && settings.rules.should_fix(diagnostic.kind.rule()) {
             diagnostic.set_fix(Edit::replacement(
                 indent(&expected, indentation),
-                range.location,
-                range.end_location,
+                range.start(),
+                range.end(),
             ));
         }
         Some(diagnostic)

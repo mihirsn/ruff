@@ -1,8 +1,8 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 use crate::registry::Rule;
 use crate::settings::{flags, Settings};
@@ -90,7 +90,7 @@ pub fn trailing_whitespace(
         if whitespace_count == line_char_count {
             if settings.rules.enabled(Rule::BlankLineWithWhitespace) {
                 let mut diagnostic =
-                    Diagnostic::new(BlankLineWithWhitespace, Range::new(start, end));
+                    Diagnostic::new(BlankLineWithWhitespace, TextRange::new(start, end));
                 if matches!(autofix, flags::Autofix::Enabled)
                     && settings.rules.should_fix(Rule::BlankLineWithWhitespace)
                 {
@@ -99,7 +99,7 @@ pub fn trailing_whitespace(
                 return Some(diagnostic);
             }
         } else if settings.rules.enabled(Rule::TrailingWhitespace) {
-            let mut diagnostic = Diagnostic::new(TrailingWhitespace, Range::new(start, end));
+            let mut diagnostic = Diagnostic::new(TrailingWhitespace, TextRange::new(start, end));
             if matches!(autofix, flags::Autofix::Enabled)
                 && settings.rules.should_fix(Rule::TrailingWhitespace)
             {

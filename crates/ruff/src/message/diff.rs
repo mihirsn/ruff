@@ -2,7 +2,6 @@ use crate::message::Message;
 use colored::{Color, ColoredString, Colorize, Styles};
 use ruff_diagnostics::Fix;
 use ruff_python_ast::source_code::{OneIndexed, SourceCode};
-use ruff_python_ast::types::Range;
 use ruff_text_size::{TextRange, TextSize};
 use similar::{ChangeTag, TextDiff};
 use std::fmt::{Display, Formatter};
@@ -41,7 +40,7 @@ impl Display for Diff<'_> {
         for edit in self.fix.edits() {
             let edit_range = self
                 .source_code
-                .text_range(Range::new(edit.start(), edit.end()));
+                .text_range(TextRange::new(edit.start(), edit.end()));
             output.push_str(&self.source_code.text()[TextRange::new(last_end, edit_range.start())]);
             output.push_str(edit.content().unwrap_or_default());
             last_end = edit_range.end();

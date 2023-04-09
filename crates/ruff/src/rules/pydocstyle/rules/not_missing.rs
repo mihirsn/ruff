@@ -2,10 +2,10 @@ use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::cast;
 use ruff_python_ast::helpers::identifier_range;
-use ruff_python_ast::types::Range;
 use ruff_python_semantic::analyze::visibility::{
     is_call, is_init, is_magic, is_new, is_overload, is_override, Visibility,
 };
+use ruff_text_size::TextRange;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::{Definition, DefinitionKind};
@@ -107,7 +107,7 @@ pub fn not_missing(checker: &mut Checker, definition: &Definition, visibility: V
             {
                 checker.diagnostics.push(Diagnostic::new(
                     UndocumentedPublicModule,
-                    Range::new(Location::new(1, 0), Location::new(1, 0)),
+                    TextRange::new(Location::new(1, 0), Location::new(1, 0)),
                 ));
             }
             false
@@ -120,7 +120,7 @@ pub fn not_missing(checker: &mut Checker, definition: &Definition, visibility: V
             {
                 checker.diagnostics.push(Diagnostic::new(
                     UndocumentedPublicPackage,
-                    Range::new(Location::new(1, 0), Location::new(1, 0)),
+                    TextRange::new(Location::new(1, 0), Location::new(1, 0)),
                 ));
             }
             false

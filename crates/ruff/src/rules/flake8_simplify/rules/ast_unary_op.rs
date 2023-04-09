@@ -3,7 +3,6 @@ use rustpython_parser::ast::{Cmpop, Expr, ExprKind, Stmt, StmtKind, Unaryop};
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::{create_expr, unparse_expr};
-use ruff_python_ast::types::Range;
 use ruff_python_semantic::scope::ScopeKind;
 
 use crate::checkers::ast::Checker;
@@ -117,7 +116,7 @@ pub fn negation_with_equal_op(checker: &mut Checker, expr: &Expr, op: &Unaryop, 
                 }),
                 checker.stylist,
             ),
-            expr.location,
+            expr.start(),
             expr.end(),
         ));
     }
@@ -168,7 +167,7 @@ pub fn negation_with_not_equal_op(
                 }),
                 checker.stylist,
             ),
-            expr.location,
+            expr.start(),
             expr.end(),
         ));
     }
@@ -196,7 +195,7 @@ pub fn double_negation(checker: &mut Checker, expr: &Expr, op: &Unaryop, operand
     if checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(
             unparse_expr(operand, checker.stylist),
-            expr.location,
+            expr.start(),
             expr.end(),
         ));
     }

@@ -2,13 +2,14 @@ use std::cmp::Ordering;
 
 use log::error;
 use num_bigint::{BigInt, Sign};
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{Cmpop, Constant, Expr, ExprKind, Located, Location, Stmt};
 use rustpython_parser::{lexer, Mode, Tok};
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::source_code::Locator;
-use ruff_python_ast::types::{Range, RefEquality};
+use ruff_python_ast::types::RefEquality;
 use ruff_python_ast::whitespace::indentation;
 
 use crate::autofix::actions::delete_stmt;
@@ -56,8 +57,8 @@ fn metadata<T>(locator: &Locator, located: &Located<T>) -> Option<BlockMetadata>
 
     // Start the selection at the start-of-line. This ensures consistent indentation
     // in the token stream, in the event that the entire block is indented.
-    let text = locator.slice(Range::new(
-        Location::new(located.location.row(), 0),
+    let text = locator.slice(TextRange::new(
+        Location::new(located.start().row(), 0),
         located.end(),
     ));
 
@@ -66,7 +67,7 @@ fn metadata<T>(locator: &Locator, located: &Located<T>) -> Option<BlockMetadata>
     let mut else_ = None;
 
     for (start, tok, _) in
-        lexer::lex_located(text, Mode::Module, Location::new(located.location.row(), 0))
+        lexer::lex_located(text, Mode::Module, Location::new(located.start().row(), 0))
             .flatten()
             .filter(|(_, tok, _)| {
                 !matches!(
@@ -198,16 +199,16 @@ fn fix_py2_block(
             Some(Edit::replacement(
                 checker
                     .locator
-                    .slice(Range::new(start.location, end.end()))
+                    .slice(TextRangeRange::new(start.start(), end.end()))
                     .to_string(),
-                stmt.location,
+                stmt.start(),
                 stmt.end(),
             ))
         } else {
             indentation(checker.locator, stmt)
                 .and_then(|indentation| {
                     adjust_indentation(
-                        Range::new(Location::new(start.location.row(), 0), end.end()),
+                        TextRange::new(Location::new(start.start().row(), 0), end.end()),
                         indentation,
                         checker.locator,
                         checker.stylist,
@@ -215,11 +216,11 @@ fn fix_py2_block(
                     .ok()
                 })
                 .map(|contents| {
-                    Edit::replacement(contents, Location::new(stmt.location.row(), 0), stmt.end())
+                    Edit::replacement(contents, Location::new(stmt.start().row(), 0), stmt.end())
                 })
         }
     } else {
-        let mut end_location = orelse.last().unwrap().location;
+        let mut end_location = orelse.last().unwrap().start();
         if block.starter == Tok::If && block.elif.is_some() {
             // Turn the `elif` into an `if`.
             end_location = block.elif.unwrap();
@@ -234,7 +235,7 @@ fn fix_py2_block(
                 end_location = body.last().unwrap().end();
             }
         }
-        Some(Edit::deletion(stmt.location, end_location))
+        Some(Edit::deletion(stmt.start(), end_location))
     }
 }
 
@@ -258,16 +259,16 @@ fn fix_py3_block(
                 Some(Edit::replacement(
                     checker
                         .locator
-                        .slice(Range::new(start.location, end.end()))
+                        .slice(TextRange::new(start.start(), end.end()))
                         .to_string(),
-                    stmt.location,
+                    stmt.start(),
                     stmt.end(),
                 ))
             } else {
                 indentation(checker.locator, stmt)
                     .and_then(|indentation| {
                         adjust_indentation(
-                            Range::new(Location::new(start.location.row(), 0), end.end()),
+                            TextRange::new(Location::new(start.start().row(), 0), end.end()),
                             indentation,
                             checker.locator,
                             checker.stylist,
@@ -277,7 +278,7 @@ fn fix_py3_block(
                     .map(|contents| {
                         Edit::replacement(
                             contents,
-                            Location::new(stmt.location.row(), 0),
+                            Location::new(stmt.start().row(), 0),
                             stmt.end(),
                         )
                     })
@@ -287,10 +288,10 @@ fn fix_py3_block(
             // Replace the `elif` with an `else, preserve the body of the elif, and remove
             // the rest.
             let end = body.last().unwrap();
-            let text = checker.locator.slice(Range::new(test.end(), end.end()));
+            let text = checker.locator.slice(TextRange::new(test.end(), end.end()));
             Some(Edit::replacement(
                 format!("else{text}"),
-                stmt.location,
+                stmt.start(),
                 stmt.end(),
             ))
         }

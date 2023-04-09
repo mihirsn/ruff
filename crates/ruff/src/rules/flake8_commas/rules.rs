@@ -7,7 +7,6 @@ use ruff_diagnostics::{AlwaysAutofixableViolation, Violation};
 use ruff_diagnostics::{Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::source_code::Locator;
-use ruff_python_ast::types::Range;
 
 use crate::registry::Rule;
 use crate::settings::{flags, Settings};
@@ -290,14 +289,16 @@ pub fn trailing_commas(
             );
         if comma_required {
             let missing_comma = prev_prev.spanned.unwrap();
-            let mut diagnostic =
-                Diagnostic::new(MissingTrailingComma, TextRange::new(comma.0, comma.2));
+            let mut diagnostic = Diagnostic::new(
+                MissingTrailingComma,
+                TextRange::new(missing_comma.0, missing_comma.2),
+            );
             if autofix.into() && settings.rules.should_fix(Rule::MissingTrailingComma) {
                 // Create a replacement that includes the final bracket (or other token),
                 // rather than just inserting a comma at the end. This prevents the UP034 autofix
                 // removing any brackets in the same linter pass - doing both at the same time could
                 // lead to a syntax error.
-                let contents = locator.slice(Range::new(missing_comma.0, missing_comma.2));
+                let contents = locator.slice(TextRange::new(missing_comma.0, missing_comma.2));
                 diagnostic.set_fix(Edit::replacement(
                     format!("{contents},"),
                     missing_comma.0,

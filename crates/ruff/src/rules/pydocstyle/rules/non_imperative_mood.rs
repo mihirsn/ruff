@@ -8,7 +8,6 @@ use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::call_path::{from_qualified_name, CallPath};
 use ruff_python_ast::cast;
 use ruff_python_ast::newlines::StrExt;
-use ruff_python_ast::types::Range;
 use ruff_python_semantic::analyze::visibility::{is_property, is_test};
 
 use crate::checkers::ast::Checker;
@@ -62,10 +61,8 @@ pub fn non_imperative_mood(
         return;
     }
     if let Some(false) = MOOD.is_imperative(&first_word_norm) {
-        let diagnostic = Diagnostic::new(
-            NonImperativeMood(line.to_string()),
-            Range::from(docstring.expr),
-        );
+        let diagnostic =
+            Diagnostic::new(NonImperativeMood(line.to_string()), docstring.expr.range());
         checker.diagnostics.push(diagnostic);
     }
 }

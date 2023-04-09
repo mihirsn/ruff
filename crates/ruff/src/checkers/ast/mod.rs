@@ -17,7 +17,7 @@ use ruff_diagnostics::Diagnostic;
 use ruff_python_ast::all::{extract_all_names, AllNamesFlags};
 use ruff_python_ast::helpers::{extract_handled_exceptions, to_module_path};
 use ruff_python_ast::source_code::{Indexer, Locator, Stylist};
-use ruff_python_ast::types::{Node, Range, RefEquality};
+use ruff_python_ast::types::{Node, RefEquality};
 use ruff_python_ast::typing::parse_type_annotation;
 use ruff_python_ast::visitor::{walk_excepthandler, walk_pattern, Visitor};
 use ruff_python_ast::{branch_detection, cast, helpers, str, visitor};
@@ -1974,7 +1974,7 @@ where
                             runtime_usage: None,
                             synthetic_usage: None,
                             typing_usage: None,
-                            range: Range::from(*stmt),
+                            range: stmt.range(),
                             source: Some(RefEquality(stmt)),
                             context: self.ctx.execution_context(),
                             exceptions: self.ctx.exceptions(),
@@ -3806,13 +3806,12 @@ where
                         if self.ctx.scope().defines(name.as_str()) {
                             self.handle_node_store(
                                 name,
-                                &Expr::new(
-                                    name_range.location,
-                                    name_range.end_location,
+                                &Expr::with_range(
                                     ExprKind::Name {
                                         id: name.to_string(),
                                         ctx: ExprContext::Store,
                                     },
+                                    name_range,
                                 ),
                             );
                         }
@@ -3820,13 +3819,12 @@ where
                         let definition = self.ctx.scope().get(name.as_str()).copied();
                         self.handle_node_store(
                             name,
-                            &Expr::new(
-                                name_range.location,
-                                name_range.end_location,
+                            &Expr::with_range(
                                 ExprKind::Name {
                                     id: name.to_string(),
                                     ctx: ExprContext::Store,
                                 },
+                                name_range,
                             ),
                         );
 
@@ -3979,7 +3977,7 @@ where
                     runtime_usage: None,
                     synthetic_usage: None,
                     typing_usage: None,
-                    range: Range::from(pattern),
+                    range: pattern.range(),
                     source: Some(*self.ctx.current_stmt()),
                     context: self.ctx.execution_context(),
                     exceptions: self.ctx.exceptions(),
@@ -4050,7 +4048,7 @@ impl<'a> Checker<'a> {
                         self.diagnostics.push(Diagnostic::new(
                             pyflakes::rules::ImportShadowedByLoopVar {
                                 name: name.to_string(),
-                                line: existing.range.location.row(),
+                                line: existing.range.start().row(),
                             },
                             binding.range,
                         ));
@@ -4069,7 +4067,7 @@ impl<'a> Checker<'a> {
                             let mut diagnostic = Diagnostic::new(
                                 pyflakes::rules::RedefinedWhileUnused {
                                     name: name.to_string(),
-                                    line: existing.range.location.row(),
+                                    line: existing.range.start().row(),
                                 },
                                 matches!(
                                     binding.kind,
@@ -4084,9 +4082,9 @@ impl<'a> Checker<'a> {
                             );
                             if let Some(parent) = binding.source.as_ref() {
                                 if matches!(parent.node, StmtKind::ImportFrom { .. })
-                                    && parent.location.row() != binding.range.location.row()
+                                    && parent.start().row() != binding.range.start().row()
                                 {
-                                    diagnostic.set_parent(parent.location);
+                                    diagnostic.set_parent(parent.start());
                                 }
                             }
                             self.diagnostics.push(diagnostic);
@@ -4154,9 +4152,9 @@ impl<'a> Checker<'a> {
         {
             let id = self.ctx.bindings.push(Binding {
                 kind: BindingKind::Builtin,
-                range: Range::default(),
+                range: TextRange::default(),
                 runtime_usage: None,
-                synthetic_usage: Some((ScopeId::global(), Range::default())),
+                synthetic_usage: Some((ScopeId::global(), TextRange::default())),
                 typing_usage: None,
                 source: None,
                 context: ExecutionContext::Runtime,
@@ -4770,9 +4768,9 @@ impl<'a> Checker<'a> {
         }
 
         // Mark anything referenced in `__all__` as used.
-        let all_bindings: Option<(Vec<BindingId>, Range)> = {
+        let all_bindings: Option<(Vec<BindingId>, TextRange)> = {
             let global_scope = self.ctx.global_scope();
-            let all_names: Option<(&Vec<&str>, Range)> = global_scope
+            let all_names: Option<(&Vec<&str>, TextRange)> = global_scope
                 .get("__all__")
                 .map(|index| &self.ctx.bindings[*index])
                 .and_then(|binding| match &binding.kind {
@@ -4802,7 +4800,7 @@ impl<'a> Checker<'a> {
         }
 
         // Extract `__all__` names from the global scope.
-        let all_names: Option<(&[&str], Range)> = self
+        let all_names: Option<(&[&str], TextRange)> = self
             .ctx
             .global_scope()
             .get("__all__")
@@ -4932,7 +4930,7 @@ impl<'a> Checker<'a> {
                                 let mut diagnostic = Diagnostic::new(
                                     pyflakes::rules::RedefinedWhileUnused {
                                         name: (*name).to_string(),
-                                        line: binding.range.location.row(),
+                                        line: binding.range.start().row(),
                                     },
                                     matches!(
                                         rebound.kind,
@@ -4948,9 +4946,9 @@ impl<'a> Checker<'a> {
                                 );
                                 if let Some(parent) = &rebound.source {
                                     if matches!(parent.node, StmtKind::ImportFrom { .. })
-                                        && parent.location.row() != rebound.range.location.row()
+                                        && parent.start().row() != rebound.range.start().row()
                                     {
-                                        diagnostic.set_parent(parent.location);
+                                        diagnostic.set_parent(parent.start());
                                     }
                                 };
                                 diagnostics.push(diagnostic);
@@ -5000,7 +4998,7 @@ impl<'a> Checker<'a> {
             if self.settings.rules.enabled(Rule::UnusedImport) {
                 // Collect all unused imports by location. (Multiple unused imports at the same
                 // location indicates an `import from`.)
-                type UnusedImport<'a> = (&'a str, &'a Range);
+                type UnusedImport<'a> = (&'a str, &'a TextRange);
                 type BindingContext<'a, 'b> = (
                     &'a RefEquality<'b, Stmt>,
                     Option<&'a RefEquality<'b, Stmt>>,
@@ -5035,9 +5033,9 @@ impl<'a> Checker<'a> {
                     let exceptions = binding.exceptions;
                     let child: &Stmt = defined_by.into();
 
-                    let diagnostic_lineno = binding.range.location.row();
+                    let diagnostic_lineno = binding.range.start().row();
                     let parent_lineno = if matches!(child.node, StmtKind::ImportFrom { .. }) {
-                        Some(child.location.row())
+                        Some(child.start().row())
                     } else {
                         None
                     };
@@ -5063,7 +5061,7 @@ impl<'a> Checker<'a> {
                     self.settings.ignore_init_module_imports && self.path.ends_with("__init__.py");
                 for ((defined_by, defined_in, exceptions), unused_imports) in unused
                     .into_iter()
-                    .sorted_by_key(|((defined_by, ..), ..)| defined_by.location)
+                    .sorted_by_key(|((defined_by, ..), ..)| defined_by.start())
                 {
                     let child: &Stmt = defined_by.into();
                     let parent: Option<&Stmt> = defined_in.map(Into::into);
@@ -5113,7 +5111,7 @@ impl<'a> Checker<'a> {
                             *range,
                         );
                         if matches!(child.node, StmtKind::ImportFrom { .. }) {
-                            diagnostic.set_parent(child.location);
+                            diagnostic.set_parent(child.start());
                         }
                         if let Some(fix) = fix.as_ref() {
                             diagnostic.set_fix(fix.clone());
@@ -5123,7 +5121,7 @@ impl<'a> Checker<'a> {
                 }
                 for ((defined_by, .., exceptions), unused_imports) in ignored
                     .into_iter()
-                    .sorted_by_key(|((defined_by, ..), ..)| defined_by.location)
+                    .sorted_by_key(|((defined_by, ..), ..)| defined_by.start())
                 {
                     let child: &Stmt = defined_by.into();
                     let multiple = unused_imports.len() > 1;
@@ -5145,7 +5143,7 @@ impl<'a> Checker<'a> {
                             *range,
                         );
                         if matches!(child.node, StmtKind::ImportFrom { .. }) {
-                            diagnostic.set_parent(child.location);
+                            diagnostic.set_parent(child.start());
                         }
                         diagnostics.push(diagnostic);
                     }
@@ -5273,18 +5271,18 @@ impl<'a> Checker<'a> {
 
                     // Extract a `Docstring` from a `Definition`.
                     let expr = definition.docstring.unwrap();
-                    let contents = self.locator.slice(expr);
-                    let indentation = self.locator.slice(Range::new(
-                        Location::new(expr.location.row(), 0),
-                        Location::new(expr.location.row(), expr.location.column()),
+                    let contents = self.locator.slice(expr.range());
+                    let indentation = self.locator.slice(TextRange::new(
+                        Location::new(expr.start().row(), 0),
+                        Location::new(expr.start().row(), expr.start().column()),
                     ));
 
                     if pydocstyle::helpers::should_ignore_docstring(contents) {
                         warn_user!(
                         "Docstring at {}:{}:{} contains implicit string concatenation; ignoring...",
                         relativize_path(self.path),
-                        expr.location.row(),
-                        expr.location.column() + 1
+                        expr.start().row(),
+                        expr.start().column() + 1
                     );
                         continue;
                     }

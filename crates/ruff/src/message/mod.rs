@@ -41,11 +41,8 @@ impl Message {
     pub fn from_diagnostic(diagnostic: Diagnostic, file: SourceFile, noqa_row: usize) -> Self {
         Self {
             kind: diagnostic.kind,
-            location: Location::new(diagnostic.location.row(), diagnostic.location.column() + 1),
-            end_location: Location::new(
-                diagnostic.end_location.row(),
-                diagnostic.end_location.column() + 1,
-            ),
+            location: Location::new(diagnostic.start().row(), diagnostic.start().column() + 1),
+            end_location: Location::new(diagnostic.end().row(), diagnostic.end().column() + 1),
             fix: diagnostic.fix,
             file,
             noqa_row,

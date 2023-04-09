@@ -121,7 +121,7 @@ where
     fn visit_stmt(&mut self, stmt: &'b Stmt) {
         // Track manual splits.
         while self.split_index < self.directives.splits.len() {
-            if stmt.location.row() >= self.directives.splits[self.split_index] {
+            if stmt.start().row() >= self.directives.splits[self.split_index] {
                 self.finalize(self.trailer_for(stmt));
                 self.split_index += 1;
             } else {
@@ -133,7 +133,7 @@ where
         if matches!(
             stmt.node,
             StmtKind::Import { .. } | StmtKind::ImportFrom { .. }
-        ) && !self.directives.exclusions.contains(&stmt.location.row())
+        ) && !self.directives.exclusions.contains(&stmt.start().row())
         {
             self.track_import(stmt);
         } else {

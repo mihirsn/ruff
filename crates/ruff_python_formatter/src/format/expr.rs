@@ -4,7 +4,6 @@ use rustpython_parser::ast::Constant;
 
 use ruff_formatter::prelude::*;
 use ruff_formatter::{format_args, write};
-use ruff_python_ast::types::Range;
 use ruff_text_size::TextSize;
 
 use crate::context::ASTFormatContext;
@@ -97,61 +96,68 @@ fn format_tuple(
     } else if !elts.is_empty() {
         write!(
             f,
-            [group(&format_with(|f| {
-                if expr.parentheses.is_if_expanded() {
-                    write!(f, [if_group_breaks(&text("("))])?;
-                }
-                if matches!(
-                    expr.parentheses,
-                    Parenthesize::IfExpanded | Parenthesize::Always
-                ) {
-                    write!(
-                        f,
-                        [soft_block_indent(&format_with(|f| {
-                            let magic_trailing_comma =
-                                expr.trivia.iter().any(|c| c.kind.is_magic_trailing_comma());
-                            let is_unbroken = expr.location.row() == expr.end().row();
-                            if magic_trailing_comma {
-                                write!(f, [expand_parent()])?;
-                            }
-                            for (i, elt) in elts.iter().enumerate() {
-                                write!(f, [elt.format()])?;
-                                if i < elts.len() - 1 {
-                                    write!(f, [text(",")])?;
-                                    write!(f, [soft_line_break_or_space()])?;
-                                } else {
-                                    if magic_trailing_comma || is_unbroken {
-                                        write!(f, [if_group_breaks(&text(","))])?;
-                                    }
-                                }
-                            }
-                            Ok(())
-                        }))]
-                    )?;
-                } else {
-                    let magic_trailing_comma =
-                        expr.trivia.iter().any(|c| c.kind.is_magic_trailing_comma());
-                    let is_unbroken = expr.location.row() == expr.end().row();
-                    if magic_trailing_comma {
-                        write!(f, [expand_parent()])?;
+            [group(&format_with(
+                |f: &mut Formatter<ASTFormatContext<'_>>| {
+                    if expr.parentheses.is_if_expanded() {
+                        write!(f, [if_group_breaks(&text("("))])?;
                     }
-                    for (i, elt) in elts.iter().enumerate() {
-                        write!(f, [elt.format()])?;
-                        if i < elts.len() - 1 {
-                            write!(f, [text(",")])?;
-                            write!(f, [soft_line_break_or_space()])?;
-                        } else {
-                            if magic_trailing_comma || is_unbroken {
-                                write!(f, [if_group_breaks(&text(","))])?;
+                    if matches!(
+                        expr.parentheses,
+                        Parenthesize::IfExpanded | Parenthesize::Always
+                    ) {
+                        write!(
+                            f,
+                            [soft_block_indent(&format_with(
+                                |f: &mut Formatter<ASTFormatContext<'_>>| {
+                                    let magic_trailing_comma = expr
+                                        .trivia
+                                        .iter()
+                                        .any(|c| c.kind.is_magic_trailing_comma());
+                                    let is_unbroken =
+                                        !f.context().locator().contains_line_break(expr.range());
+                                    if magic_trailing_comma {
+                                        write!(f, [expand_parent()])?;
+                                    }
+                                    for (i, elt) in elts.iter().enumerate() {
+                                        write!(f, [elt.format()])?;
+                                        if i < elts.len() - 1 {
+                                            write!(f, [text(",")])?;
+                                            write!(f, [soft_line_break_or_space()])?;
+                                        } else {
+                                            if magic_trailing_comma || is_unbroken {
+                                                write!(f, [if_group_breaks(&text(","))])?;
+                                            }
+                                        }
+                                    }
+                                    Ok(())
+                                }
+                            ))]
+                        )?;
+                    } else {
+                        let magic_trailing_comma =
+                            expr.trivia.iter().any(|c| c.kind.is_magic_trailing_comma());
+                        let is_unbroken = !f.context().locator().contains_line_break(expr.range());
+                        if magic_trailing_comma {
+                            write!(f, [expand_parent()])?;
+                        }
+                        for (i, elt) in elts.iter().enumerate() {
+                            write!(f, [elt.format()])?;
+                            if i < elts.len() - 1 {
+                                write!(f, [text(",")])?;
+                                write!(f, [soft_line_break_or_space()])?;
+                            } else {
+                                if magic_trailing_comma || is_unbroken {
+                                    write!(f, [if_group_breaks(&text(","))])?;
+                                }
                             }
                         }
                     }
+                    if expr.parentheses.is_if_expanded() {
+                        write!(f, [if_group_breaks(&text(")"))])?;
+                    }
+                    Ok(())
                 }
-                if expr.parentheses.is_if_expanded() {
-                    write!(f, [if_group_breaks(&text(")"))])?;
-                }
-                Ok(())
-            }))]
+            ))]
         )?;
     }
     Ok(())

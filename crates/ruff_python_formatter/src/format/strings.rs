@@ -125,7 +125,7 @@ impl Format<ASTFormatContext<'_>> for StringLiteral<'_> {
 
         // TODO(charlie): This tokenization needs to happen earlier, so that we can attach
         // comments to individual string literals.
-        let contents = f.context().locator().slice(expr);
+        let contents = f.context().locator().slice(expr.range());
         let elts = rustpython_parser::lexer::lex_located(contents, Mode::Module, expr.start())
             .flatten()
             .filter_map(|(start, tok, end)| {

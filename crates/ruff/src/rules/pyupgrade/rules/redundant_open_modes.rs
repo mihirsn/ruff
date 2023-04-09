@@ -128,7 +128,7 @@ fn create_check(
 }
 
 fn create_remove_param_fix(locator: &Locator, expr: &Expr, mode_param: &Expr) -> Result<Edit> {
-    let content = locator.slice(expr);
+    let content = locator.slice(expr.range());
     // Find the last comma before mode_param and create a deletion fix
     // starting from the comma and ending after mode_param.
     let mut fix_start: Option<Location> = None;
@@ -136,7 +136,7 @@ fn create_remove_param_fix(locator: &Locator, expr: &Expr, mode_param: &Expr) ->
     let mut is_first_arg: bool = false;
     let mut delete_first_arg: bool = false;
     for (start, tok, end) in lexer::lex_located(content, Mode::Module, expr.start()).flatten() {
-        if start == mode_param.location {
+        if start == mode_param.start() {
             if is_first_arg {
                 delete_first_arg = true;
                 continue;

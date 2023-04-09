@@ -4,7 +4,6 @@ use ruff_diagnostics::Violation;
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::source_code::Locator;
 use ruff_python_ast::token_kind::TokenKind;
-use ruff_python_ast::types::Range;
 use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
@@ -149,12 +148,12 @@ pub(crate) fn whitespace_before_comment(
 
         if let TokenKind::Comment = kind {
             let (start, end) = token.range();
-            let line = locator.slice(Range::new(
+            let line = locator.slice(TextRange::new(
                 Location::new(start.row(), 0),
                 Location::new(start.row(), start.column()),
             ));
 
-            let text = locator.slice(Range::new(start, end));
+            let text = locator.slice(TextRange::new(start, end));
 
             let is_inline_comment = !line.trim().is_empty();
             if is_inline_comment {
@@ -180,15 +179,17 @@ pub(crate) fn whitespace_before_comment(
             if is_inline_comment {
                 if bad_prefix.is_some() || comment.chars().next().map_or(false, char::is_whitespace)
                 {
-                    diagnostics.push((Range::new(start, end), NoSpaceAfterInlineComment.into()));
+                    diagnostics
+                        .push((TextRange::new(start, end), NoSpaceAfterInlineComment.into()));
                 }
             } else if let Some(bad_prefix) = bad_prefix {
                 if bad_prefix != '!' || start.row() > 1 {
                     if bad_prefix != '#' {
-                        diagnostics.push((Range::new(start, end), NoSpaceAfterBlockComment.into()));
+                        diagnostics
+                            .push((TextRange::new(start, end), NoSpaceAfterBlockComment.into()));
                     } else if !comment.is_empty() {
                         diagnostics.push((
-                            Range::new(start, end),
+                            TextRange::new(start, end),
                             MultipleLeadingHashesForBlockComment.into(),
                         ));
                     }

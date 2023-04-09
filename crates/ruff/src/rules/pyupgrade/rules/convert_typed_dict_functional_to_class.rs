@@ -6,7 +6,6 @@ use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::{create_expr, create_stmt, unparse_stmt};
 use ruff_python_ast::source_code::Stylist;
-use ruff_python_ast::types::Range;
 use ruff_python_stdlib::identifiers::is_identifier;
 
 use crate::checkers::ast::Checker;
@@ -216,7 +215,7 @@ fn convert_to_class(
             &create_class_def_stmt(class_name, body, total_keyword, base_class),
             stylist,
         ),
-        stmt.location,
+        stmt.start(),
         stmt.end(),
     )
 }
@@ -242,7 +241,7 @@ pub fn convert_typed_dict_functional_to_class(
         }
     };
     // TODO(charlie): Preserve indentation, to remove the first-column requirement.
-    let fixable = stmt.location.column() == 0;
+    let fixable = stmt.start().column() == 0;
     let mut diagnostic = Diagnostic::new(
         ConvertTypedDictFunctionalToClass {
             name: class_name.to_string(),

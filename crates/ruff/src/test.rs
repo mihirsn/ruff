@@ -29,7 +29,7 @@ pub fn test_path(path: impl AsRef<Path>, settings: &Settings) -> Result<Vec<Mess
     let tokens: Vec<LexResult> = ruff_rustpython::tokenize(&contents);
     let locator = Locator::new(&contents);
     let stylist = Stylist::from_tokens(&tokens, &locator);
-    let indexer: Indexer = tokens.as_slice().into();
+    let indexer = Indexer::from_tokens(&tokens, &locator);
     let directives =
         directives::extract_directives(&tokens, directives::Flags::from_settings(settings));
     let LinterResult {
@@ -64,7 +64,7 @@ pub fn test_path(path: impl AsRef<Path>, settings: &Settings) -> Result<Vec<Mess
             let tokens: Vec<LexResult> = ruff_rustpython::tokenize(&contents);
             let locator = Locator::new(&contents);
             let stylist = Stylist::from_tokens(&tokens, &locator);
-            let indexer: Indexer = tokens.as_slice().into();
+            let indexer = Indexer::from_tokens(&tokens, &locator);
             let directives =
                 directives::extract_directives(&tokens, directives::Flags::from_settings(settings));
             let LinterResult {

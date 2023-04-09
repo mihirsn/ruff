@@ -3,7 +3,6 @@ use rustpython_parser::ast::{Expr, ExprKind, Location};
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::call_path::CallPath;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::registry::{AsRule, Rule};
@@ -84,14 +83,13 @@ fn check_mark_parentheses(checker: &mut Checker, decorator: &Expr, call_path: &C
                 && args.is_empty()
                 && keywords.is_empty()
             {
-                let fix =
-                    Edit::deletion(func.end_location.unwrap(), decorator.end_location.unwrap());
+                let fix = Edit::deletion(func.end(), decorator.end());
                 pytest_mark_parentheses(checker, decorator, call_path, fix, "", "()");
             }
         }
         _ => {
             if checker.settings.flake8_pytest_style.mark_parentheses {
-                let fix = Edit::insertion("()".to_string(), decorator.end_location.unwrap());
+                let fix = Edit::insertion("()".to_string(), decorator.end());
                 pytest_mark_parentheses(checker, decorator, call_path, fix, "()", "");
             }
         }
@@ -114,7 +112,7 @@ fn check_useless_usefixtures(checker: &mut Checker, decorator: &Expr, call_path:
     if !has_parameters {
         let mut diagnostic = Diagnostic::new(PytestUseFixturesWithoutParameters, decorator.range());
         if checker.patch(diagnostic.kind.rule()) {
-            let at_start = Location::new(decorator.location.row(), decorator.location.column() - 1);
+            let at_start = Location::new(decorator.start().row(), decorator.start().column() - 1);
             diagnostic.set_fix(Edit::deletion(at_start, decorator.end()));
         }
         checker.diagnostics.push(diagnostic);

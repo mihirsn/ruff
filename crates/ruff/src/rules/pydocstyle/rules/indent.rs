@@ -2,8 +2,8 @@ use ruff_diagnostics::{AlwaysAutofixableViolation, Violation};
 use ruff_diagnostics::{Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::NewlineWithTrailingNewline;
-use ruff_python_ast::types::Range;
 use ruff_python_ast::whitespace;
+use ruff_text_size::TextRange;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::Docstring;
@@ -88,16 +88,16 @@ pub fn indent(checker: &mut Checker, docstring: &Docstring) {
             {
                 let mut diagnostic = Diagnostic::new(
                     UnderIndentation,
-                    Range::new(
-                        Location::new(docstring.expr.location.row() + i, 0),
-                        Location::new(docstring.expr.location.row() + i, 0),
+                    TextRange::new(
+                        Location::new(docstring.expr.start().row() + i, 0),
+                        Location::new(docstring.expr.start().row() + i, 0),
                     ),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     diagnostic.set_fix(Edit::replacement(
                         whitespace::clean(docstring.indentation),
-                        Location::new(docstring.expr.location.row() + i, 0),
-                        Location::new(docstring.expr.location.row() + i, line_indent.len()),
+                        Location::new(docstring.expr.start().row() + i, 0),
+                        Location::new(docstring.expr.start().row() + i, line_indent.len()),
                     ));
                 }
                 checker.diagnostics.push(diagnostic);
@@ -121,10 +121,9 @@ pub fn indent(checker: &mut Checker, docstring: &Docstring) {
 
     if checker.settings.rules.enabled(Rule::IndentWithSpaces) {
         if has_seen_tab {
-            checker.diagnostics.push(Diagnostic::new(
-                IndentWithSpaces,
-                Range::from(docstring.expr),
-            ));
+            checker
+                .diagnostics
+                .push(Diagnostic::new(IndentWithSpaces, docstring.range()));
         }
     }
 
@@ -138,16 +137,16 @@ pub fn indent(checker: &mut Checker, docstring: &Docstring) {
                     // enables autofix.
                     let mut diagnostic = Diagnostic::new(
                         OverIndentation,
-                        Range::new(
-                            Location::new(docstring.expr.location.row() + i, 0),
-                            Location::new(docstring.expr.location.row() + i, 0),
+                        TextRange::new(
+                            Location::new(docstring.expr.start().row() + i, 0),
+                            Location::new(docstring.expr.start().row() + i, 0),
                         ),
                     );
                     if checker.patch(diagnostic.kind.rule()) {
                         diagnostic.set_fix(Edit::replacement(
                             whitespace::clean(docstring.indentation),
-                            Location::new(docstring.expr.location.row() + i, 0),
-                            Location::new(docstring.expr.location.row() + i, line_indent.len()),
+                            Location::new(docstring.expr.start().row() + i, 0),
+                            Location::new(docstring.expr.start().row() + i, line_indent.len()),
                         ));
                     }
                     checker.diagnostics.push(diagnostic);
@@ -162,16 +161,16 @@ pub fn indent(checker: &mut Checker, docstring: &Docstring) {
             if line_indent.len() > docstring.indentation.len() {
                 let mut diagnostic = Diagnostic::new(
                     OverIndentation,
-                    Range::new(
-                        Location::new(docstring.expr.location.row() + i, 0),
-                        Location::new(docstring.expr.location.row() + i, 0),
+                    TextRange::new(
+                        Location::new(docstring.expr.start().row() + i, 0),
+                        Location::new(docstring.expr.start().row() + i, 0),
                     ),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     diagnostic.set_fix(Edit::replacement(
                         whitespace::clean(docstring.indentation),
-                        Location::new(docstring.expr.location.row() + i, 0),
-                        Location::new(docstring.expr.location.row() + i, line_indent.len()),
+                        Location::new(docstring.expr.start().row() + i, 0),
+                        Location::new(docstring.expr.start().row() + i, line_indent.len()),
                     ));
                 }
                 checker.diagnostics.push(diagnostic);

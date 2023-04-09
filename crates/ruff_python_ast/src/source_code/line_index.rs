@@ -66,6 +66,7 @@ impl LineIndex {
                 column: OneIndexed::from_zero_indexed(0),
             },
             Err(next_row) => {
+                // SAFETY: Safe because the index always contains an entry for the offset 0
                 let row = next_row - 1;
                 let line_start = self.line_starts()[row];
 

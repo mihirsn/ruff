@@ -5,7 +5,6 @@ use rustc_hash::FxHashMap;
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, DiagnosticKind, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::source_code::Locator;
-use ruff_python_ast::types::Range;
 
 use crate::message::Location;
 use crate::registry::AsRule;
@@ -1694,7 +1693,7 @@ pub fn ambiguous_unicode_character(
 ) -> Vec<Diagnostic> {
     let mut diagnostics = vec![];
 
-    let text = locator.slice(Range::new(start, end));
+    let text = locator.slice(TextRange::new(start, end));
 
     let mut col_offset = 0;
     let mut row_offset = 0;

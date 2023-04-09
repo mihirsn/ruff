@@ -3,8 +3,6 @@
 use ruff_text_size::{TextLen, TextRange, TextSize};
 use std::ops::Add;
 
-use crate::types::Range;
-
 pub struct Locator<'a> {
     contents: &'a str,
 }
@@ -156,6 +154,30 @@ impl<'a> Locator<'a> {
         TextRange::new(self.line_start(range.start()), self.line_end(range.end()))
     }
 
+    /// Returns true if the text of `range` contains any line break.
+    ///
+    /// ```
+    /// # use ruff_text_size::{TextRange, TextSize};
+    /// # use ruff_python_ast::source_code::Locator;
+    ///
+    /// let locator = Locator::new("First line\nsecond line\r\nthird line");
+    ///
+    /// assert!(
+    ///     !locator.contains_line_break(TextRange::new(TextSize::from(3), TextSize::from(5))),
+    /// );
+    /// assert!(
+    ///     locator.contains_line_break(TextRange::new(TextSize::from(3), TextSize::from(14))),
+    /// );
+    /// ```
+    ///
+    /// ## Panics
+    /// If the `range` is out of bounds.
+    pub fn contains_line_break(&self, range: TextRange) -> bool {
+        let text = &self.contents[range];
+
+        text.bytes().any(|b| matches!(b, b'\n' | b'\r'))
+    }
+
     /// Returns the text of all lines that include `range`.
     ///
     /// ## Examples
@@ -197,8 +219,8 @@ impl<'a> Locator<'a> {
 
     /// Take the source code between the given [`Range`].
     #[inline]
-    pub fn slice<R: Into<Range>>(&self, range: R) -> &'a str {
-        &self.contents[range.into().range]
+    pub fn slice<R: Into<TextRange>>(&self, range: R) -> &'a str {
+        &self.contents[range.into()]
     }
 
     /// Return the underlying source code.

@@ -6,7 +6,6 @@ use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation, CacheKey};
 use ruff_python_ast::helpers::{create_stmt, from_relative_import, unparse_stmt};
 use ruff_python_ast::source_code::Stylist;
-use ruff_python_ast::types::Range;
 use ruff_python_stdlib::identifiers::is_identifier;
 
 use crate::checkers::ast::Checker;
@@ -142,7 +141,7 @@ fn fix_banned_relative_import(
             stylist,
         );
 
-        Some(Edit::replacement(content, stmt.location, stmt.end()))
+        Some(Edit::replacement(content, stmt.start(), stmt.end()))
     } else {
         None
     }

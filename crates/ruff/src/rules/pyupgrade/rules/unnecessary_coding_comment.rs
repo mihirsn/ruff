@@ -1,10 +1,10 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 // TODO: document referencing [PEP 3120]: https://peps.python.org/pep-3120/
 #[violation]
@@ -31,7 +31,7 @@ pub fn unnecessary_coding_comment(lineno: usize, line: &str, autofix: bool) -> O
     if CODING_COMMENT_REGEX.is_match(line) {
         let mut diagnostic = Diagnostic::new(
             UTF8EncodingDeclaration,
-            Range::new(Location::new(lineno + 1, 0), Location::new(lineno + 2, 0)),
+            TextRange::new(Location::new(lineno + 1, 0), Location::new(lineno + 2, 0)),
         );
         if autofix {
             diagnostic.set_fix(Edit::deletion(

@@ -4,11 +4,11 @@ use libcst_native::{
     LeftParen, ParenthesizableWhitespace, ParenthesizedNode, RightParen, SimpleWhitespace,
     Statement, Suite,
 };
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::Edit;
 use ruff_python_ast::source_code::{Locator, Stylist};
-use ruff_python_ast::types::Range;
 use ruff_python_ast::whitespace;
 
 use crate::cst::matchers::match_module;
@@ -40,8 +40,8 @@ pub(crate) fn fix_nested_if_statements(
     };
 
     // Extract the module text.
-    let contents = locator.slice(Range::new(
-        Location::new(stmt.location.row(), 0),
+    let contents = locator.slice(TextRange::new(
+        Location::new(stmt.start().row(), 0),
         Location::new(stmt.end().row() + 1, 0),
     ));
 
@@ -137,7 +137,7 @@ pub(crate) fn fix_nested_if_statements(
 
     Ok(Edit::replacement(
         contents,
-        Location::new(stmt.location.row(), 0),
+        Location::new(stmt.start().row(), 0),
         Location::new(stmt.end().row() + 1, 0),
     ))
 }

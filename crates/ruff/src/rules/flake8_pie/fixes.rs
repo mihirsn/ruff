@@ -13,7 +13,7 @@ pub fn fix_unnecessary_comprehension_any_all(
     expr: &rustpython_parser::ast::Expr,
 ) -> Result<Edit> {
     // Expr(ListComp) -> Expr(GeneratorExp)
-    let expression_text = locator.slice(expr);
+    let expression_text = locator.slice(expr.range());
     let mut tree = match_expression(expression_text)?;
     let call = match_call(&mut tree)?;
 

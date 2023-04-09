@@ -2,7 +2,7 @@ use criterion::measurement::WallTime;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use ruff_benchmark::{TestCase, TestCaseSpeed, TestFile, TestFileDownloadError};
 // use ruff_python_ast::visitor::{walk_stmt, Visitor};
-use rustpython_parser::ast::Stmt;
+
 use std::time::Duration;
 
 #[cfg(target_os = "windows")]

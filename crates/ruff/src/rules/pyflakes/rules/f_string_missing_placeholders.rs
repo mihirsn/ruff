@@ -54,7 +54,7 @@ fn find_useless_f_strings<'a>(
     expr: &'a Expr,
     locator: &'a Locator,
 ) -> impl Iterator<Item = (TextRange, TextRange)> + 'a {
-    let contents = locator.slice(expr);
+    let contents = locator.slice(expr.range());
     lexer::lex_located(contents, Mode::Module, expr.start())
         .flatten()
         .filter_map(|(location, tok, end_location)| match tok {

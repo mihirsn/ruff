@@ -1,3 +1,4 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{Arguments, Expr, ExprKind, Location, Stmt, StmtKind};
 
 use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
@@ -5,7 +6,6 @@ use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::{has_leading_content, has_trailing_content, unparse_stmt};
 use ruff_python_ast::newlines::StrExt;
 use ruff_python_ast::source_code::Stylist;
-use ruff_python_ast::types::Range;
 use ruff_python_ast::whitespace::leading_space;
 use ruff_python_semantic::scope::ScopeKind;
 
@@ -81,9 +81,9 @@ pub fn lambda_assignment(checker: &mut Checker, target: &Expr, value: &Expr, stm
                 && !has_leading_content(stmt, checker.locator)
                 && !has_trailing_content(stmt, checker.locator)
             {
-                let first_line = checker.locator.slice(Range::new(
-                    Location::new(stmt.location.row(), 0),
-                    Location::new(stmt.location.row() + 1, 0),
+                let first_line = checker.locator.slice(TextRange::new(
+                    Location::new(stmt.start().row(), 0),
+                    Location::new(stmt.start().row() + 1, 0),
                 ));
                 let indentation = &leading_space(first_line);
                 let mut indented = String::new();
@@ -99,7 +99,7 @@ pub fn lambda_assignment(checker: &mut Checker, target: &Expr, value: &Expr, stm
                         indented.push_str(line);
                     }
                 }
-                diagnostic.set_fix(Edit::replacement(indented, stmt.location, stmt.end()));
+                diagnostic.set_fix(Edit::replacement(indented, stmt.start(), stmt.end()));
             }
 
             checker.diagnostics.push(diagnostic);

@@ -1,8 +1,7 @@
+use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
 use rustpython_parser::ast::Location;
 use serde::{Deserialize, Serialize};
-
-use crate::types::Range;
 
 /// A representation of an individual name imported via any import statement.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -93,9 +92,9 @@ impl ModuleImport {
     }
 }
 
-impl From<&ModuleImport> for Range {
-    fn from(import: &ModuleImport) -> Range {
-        Range::new(import.location, import.end_location)
+impl From<&ModuleImport> for TextRange {
+    fn from(import: &ModuleImport) -> TextRange {
+        TextRange::new(import.location, import.end_location)
     }
 }
 

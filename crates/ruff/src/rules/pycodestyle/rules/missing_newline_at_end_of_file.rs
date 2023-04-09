@@ -1,10 +1,10 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::StrExt;
 use ruff_python_ast::source_code::{Locator, Stylist};
-use ruff_python_ast::types::Range;
 
 /// ## What it does
 /// Checks for files missing a new line at the end of the file.
@@ -48,8 +48,10 @@ pub fn no_newline_at_end_of_file(
         if let Some(line) = locator.contents().universal_newlines().last() {
             // Both locations are at the end of the file (and thus the same).
             let location = Location::new(locator.count_lines(), line.len());
-            let mut diagnostic =
-                Diagnostic::new(MissingNewlineAtEndOfFile, Range::new(location, location));
+            let mut diagnostic = Diagnostic::new(
+                MissingNewlineAtEndOfFile,
+                TextRange::new(location, location),
+            );
             if autofix {
                 diagnostic.set_fix(Edit::insertion(stylist.line_ending().to_string(), location));
             }

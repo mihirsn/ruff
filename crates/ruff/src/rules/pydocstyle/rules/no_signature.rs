@@ -3,7 +3,6 @@ use rustpython_parser::ast::StmtKind;
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::StrExt;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::{DefinitionKind, Docstring};
@@ -41,5 +40,5 @@ pub fn no_signature(checker: &mut Checker, docstring: &Docstring) {
     };
     checker
         .diagnostics
-        .push(Diagnostic::new(NoSignature, Range::from(docstring.expr)));
+        .push(Diagnostic::new(NoSignature, docstring.expr.range()));
 }

@@ -1,8 +1,8 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 use crate::rules::flake8_executable::helpers::ShebangDirective;
 
@@ -30,7 +30,7 @@ pub fn shebang_whitespace(
         if *n_spaces > 0 && *start == n_spaces + 2 {
             let mut diagnostic = Diagnostic::new(
                 ShebangLeadingWhitespace,
-                Range::new(
+                TextRange::new(
                     Location::new(lineno + 1, 0),
                     Location::new(lineno + 1, *n_spaces),
                 ),

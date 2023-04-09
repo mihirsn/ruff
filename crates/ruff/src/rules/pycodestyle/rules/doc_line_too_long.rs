@@ -1,9 +1,9 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 use unicode_width::UnicodeWidthStr;
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 use crate::rules::pycodestyle::helpers::is_overlong;
 use crate::settings::Settings;
@@ -56,7 +56,7 @@ pub fn doc_line_too_long(lineno: usize, line: &str, settings: &Settings) -> Opti
     ) {
         Some(Diagnostic::new(
             DocLineTooLong(line_width, limit),
-            Range::new(
+            TextRange::new(
                 Location::new(lineno + 1, limit),
                 Location::new(lineno + 1, line.chars().count()),
             ),

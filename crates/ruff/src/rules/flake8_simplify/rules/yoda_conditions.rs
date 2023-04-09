@@ -5,7 +5,6 @@ use rustpython_parser::ast::{Cmpop, Expr, ExprKind, Unaryop};
 use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::source_code::{Locator, Stylist};
-use ruff_python_ast::types::Range;
 use ruff_python_stdlib::str::{self};
 
 use crate::checkers::ast::Checker;
@@ -162,7 +161,7 @@ pub fn yoda_conditions(
             expr.range(),
         );
         if checker.patch(diagnostic.kind.rule()) {
-            diagnostic.set_fix(Edit::replacement(suggestion, expr.location, expr.end()));
+            diagnostic.set_fix(Edit::replacement(suggestion, expr.start(), expr.end()));
         }
         checker.diagnostics.push(diagnostic);
     } else {

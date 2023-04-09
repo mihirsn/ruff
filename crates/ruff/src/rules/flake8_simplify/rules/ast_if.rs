@@ -1,4 +1,5 @@
 use log::error;
+use ruff_text_size::TextRange;
 use rustc_hash::FxHashSet;
 use rustpython_parser::ast::{Cmpop, Constant, Expr, ExprContext, ExprKind, Stmt, StmtKind};
 use unicode_width::UnicodeWidthStr;
@@ -11,7 +12,6 @@ use ruff_python_ast::helpers::{
     has_comments_in, unparse_expr, unparse_stmt,
 };
 use ruff_python_ast::newlines::StrExt;
-use ruff_python_ast::types::Range;
 use ruff_python_semantic::context::Context;
 
 use crate::checkers::ast::Checker;
@@ -275,13 +275,16 @@ pub fn nested_if_statements(
         return;
     };
 
-    let colon = first_colon_range(Range::new(test.end(), first_stmt.location), checker.locator);
+    let colon = first_colon_range(
+        TextRange::new(test.end(), first_stmt.start()),
+        checker.locator,
+    );
 
     // The fixer preserves comments in the nested body, but removes comments between
     // the outer and inner if statements.
     let nested_if = &body[0];
     let fixable = !has_comments_in(
-        Range::new(stmt.location, nested_if.location),
+        TextRange::new(stmt.start(), nested_if.start()),
         checker.locator,
     );
 
@@ -289,7 +292,7 @@ pub fn nested_if_statements(
         CollapsibleIf { fixable },
         colon.map_or_else(
             || stmt.range(),
-            |colon| Range::new(stmt.location, colon.end_location),
+            |colon| TextRange::new(stmt.start(), colon.end()),
         ),
     );
     if fixable && checker.patch(diagnostic.kind.rule()) {
@@ -374,7 +377,7 @@ pub fn needless_bool(checker: &mut Checker, stmt: &Stmt) {
                     }),
                     checker.stylist,
                 ),
-                stmt.location,
+                stmt.start(),
                 stmt.end(),
             ));
         } else {
@@ -394,7 +397,7 @@ pub fn needless_bool(checker: &mut Checker, stmt: &Stmt) {
                     }),
                     checker.stylist,
                 ),
-                stmt.location,
+                stmt.start(),
                 stmt.end(),
             ));
         };
@@ -510,7 +513,7 @@ pub fn use_ternary_operator(checker: &mut Checker, stmt: &Stmt, parent: Option<&
     let contents = unparse_stmt(&ternary, checker.stylist);
 
     // Don't flag if the resulting expression would exceed the maximum line length.
-    if stmt.location.column() + contents.width() > checker.settings.line_length {
+    if stmt.start().column() + contents.width() > checker.settings.line_length {
         return;
     }
 
@@ -523,7 +526,7 @@ pub fn use_ternary_operator(checker: &mut Checker, stmt: &Stmt, parent: Option<&
         stmt.range(),
     );
     if fixable && checker.patch(diagnostic.kind.rule()) {
-        diagnostic.set_fix(Edit::replacement(contents, stmt.location, stmt.end()));
+        diagnostic.set_fix(Edit::replacement(contents, stmt.start(), stmt.end()));
     }
     checker.diagnostics.push(diagnostic);
 }
@@ -591,8 +594,8 @@ pub fn if_with_same_arms(checker: &mut Checker, stmt: &Stmt, parent: Option<&Stm
         if compare_body(body, next_body) {
             checker.diagnostics.push(Diagnostic::new(
                 IfWithSameArms,
-                Range::new(
-                    if i == 0 { stmt.location } else { test.location },
+                TextRange::new(
+                    if i == 0 { stmt.start() } else { test.start() },
                     next_body.last().unwrap().end(),
                 ),
             ));
@@ -853,7 +856,7 @@ pub fn use_dict_get_with_default(
     );
 
     // Don't flag if the resulting expression would exceed the maximum line length.
-    if stmt.location.column() + contents.width() > checker.settings.line_length {
+    if stmt.start().column() + contents.width() > checker.settings.line_length {
         return;
     }
 
@@ -866,7 +869,7 @@ pub fn use_dict_get_with_default(
         stmt.range(),
     );
     if fixable && checker.patch(diagnostic.kind.rule()) {
-        diagnostic.set_fix(Edit::replacement(contents, stmt.location, stmt.end()));
+        diagnostic.set_fix(Edit::replacement(contents, stmt.start(), stmt.end()));
     }
     checker.diagnostics.push(diagnostic);
 }

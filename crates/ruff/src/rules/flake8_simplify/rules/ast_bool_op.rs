@@ -3,6 +3,7 @@ use std::iter;
 
 use itertools::Either::{Left, Right};
 use itertools::Itertools;
+use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
 use rustpython_parser::ast::{
     Boolop, Cmpop, Constant, Expr, ExprContext, ExprKind, Location, Unaryop,
@@ -12,7 +13,6 @@ use ruff_diagnostics::{AlwaysAutofixableViolation, AutofixKind, Diagnostic, Edit
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::comparable::ComparableExpr;
 use ruff_python_ast::helpers::{contains_effect, create_expr, has_comments, unparse_expr};
-use ruff_python_ast::types::Range;
 use ruff_python_semantic::context::Context;
 
 use crate::checkers::ast::Checker;
@@ -284,7 +284,7 @@ pub fn duplicate_isinstance_call(checker: &mut Checker, expr: &Expr) {
                 // multiple duplicates, the fixes will conflict.
                 diagnostic.set_fix(Edit::replacement(
                     unparse_expr(&bool_op, checker.stylist),
-                    expr.location,
+                    expr.start(),
                     expr.end(),
                 ));
             }
@@ -387,7 +387,7 @@ pub fn compare_with_tuple(checker: &mut Checker, expr: &Expr) {
             };
             diagnostic.set_fix(Edit::replacement(
                 unparse_expr(&in_expr, checker.stylist),
-                expr.location,
+                expr.start(),
                 expr.end(),
             ));
         }
@@ -439,7 +439,7 @@ pub fn expr_and_not_expr(checker: &mut Checker, expr: &Expr) {
                 if checker.patch(diagnostic.kind.rule()) {
                     diagnostic.set_fix(Edit::replacement(
                         "False".to_string(),
-                        expr.location,
+                        expr.start(),
                         expr.end(),
                     ));
                 }
@@ -493,7 +493,7 @@ pub fn expr_or_not_expr(checker: &mut Checker, expr: &Expr) {
                 if checker.patch(diagnostic.kind.rule()) {
                     diagnostic.set_fix(Edit::replacement(
                         "True".to_string(),
-                        expr.location,
+                        expr.start(),
                         expr.end(),
                     ));
                 }
@@ -519,11 +519,11 @@ pub fn is_short_circuit(
         Boolop::Or => true,
     };
 
-    let mut location = expr.location;
+    let mut location = expr.start();
     for (value, next_value) in values.iter().tuple_windows() {
         // Keep track of the location of the furthest-right, non-effectful expression.
         if contains_effect(value, |id| ctx.is_builtin(id)) {
-            location = next_value.location;
+            location = next_value.start();
             continue;
         }
 
@@ -561,13 +561,7 @@ pub fn expr_or_true(checker: &mut Checker, expr: &Expr) {
     let Some((location, end_location)) = is_short_circuit(&checker.ctx, expr, &Boolop::Or) else {
         return;
     };
-    let mut diagnostic = Diagnostic::new(
-        ExprOrTrue,
-        Range {
-            location,
-            end_location,
-        },
-    );
+    let mut diagnostic = Diagnostic::new(ExprOrTrue, TextRange::new(location, end_location));
     if checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(
             "True".to_string(),
@@ -583,13 +577,7 @@ pub fn expr_and_false(checker: &mut Checker, expr: &Expr) {
     let Some((location, end_location)) = is_short_circuit(&checker.ctx, expr, &Boolop::And) else {
         return;
     };
-    let mut diagnostic = Diagnostic::new(
-        ExprAndFalse,
-        Range {
-            location,
-            end_location,
-        },
-    );
+    let mut diagnostic = Diagnostic::new(ExprAndFalse, TextRange::new(location, end_location));
     if checker.patch(diagnostic.kind.rule()) {
         diagnostic.set_fix(Edit::replacement(
             "False".to_string(),

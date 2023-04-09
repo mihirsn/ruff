@@ -95,7 +95,7 @@ impl<'a> Importer<'a> {
 
     /// Add the given member to an existing `StmtKind::ImportFrom` statement.
     pub fn add_member(&self, stmt: &Stmt, member: &str) -> Result<Edit> {
-        let mut tree = match_module(self.locator.slice(stmt))?;
+        let mut tree = match_module(self.locator.slice(stmt.range()))?;
         let import_from = match_import_from(&mut tree)?;
         let aliases = match_aliases(import_from)?;
         aliases.push(ImportAlias {

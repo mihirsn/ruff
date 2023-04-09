@@ -4,7 +4,6 @@ use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::StrExt;
 use ruff_python_ast::str::leading_quote;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::Docstring;
@@ -59,7 +58,7 @@ pub fn ends_with_punctuation(checker: &mut Checker, docstring: &Docstring) {
         let line = body.universal_newlines().nth(index).unwrap();
         let trimmed = line.trim_end();
         if !(trimmed.ends_with('.') || trimmed.ends_with('!') || trimmed.ends_with('?')) {
-            let mut diagnostic = Diagnostic::new(EndsInPunctuation, Range::from(docstring.expr));
+            let mut diagnostic = Diagnostic::new(EndsInPunctuation, docstring.expr.range());
             // Best-effort autofix: avoid adding a period after other punctuation marks.
             if checker.patch(diagnostic.kind.rule())
                 && !trimmed.ends_with(':')
@@ -68,15 +67,15 @@ pub fn ends_with_punctuation(checker: &mut Checker, docstring: &Docstring) {
                 if let Some((row, column)) = if index == 0 {
                     leading_quote(contents).map(|pattern| {
                         (
-                            docstring.expr.location.row(),
-                            docstring.expr.location.column()
+                            docstring.expr.start().row(),
+                            docstring.expr.start().column()
                                 + pattern.len()
                                 + trimmed.chars().count(),
                         )
                     })
                 } else {
                     Some((
-                        docstring.expr.location.row() + index,
+                        docstring.expr.start().row() + index,
                         trimmed.chars().count(),
                     ))
                 } {

@@ -8,7 +8,6 @@ use serde::Serialize;
 use serde_json::error::Category;
 
 use ruff_diagnostics::Diagnostic;
-use ruff_python_ast::types::Range;
 
 use crate::jupyter::{CellType, JupyterNotebook, SourceValue};
 use crate::rules::pycodestyle::rules::SyntaxError;

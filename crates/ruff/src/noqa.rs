@@ -8,13 +8,13 @@ use log::warn;
 use nohash_hasher::IntMap;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use ruff_text_size::TextRange;
 use rustc_hash::FxHashMap;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::Diagnostic;
 use ruff_python_ast::newlines::StrExt;
 use ruff_python_ast::source_code::{LineEnding, Locator};
-use ruff_python_ast::types::Range;
 
 use crate::codes::NoqaCode;
 use crate::registry::{AsRule, Rule, RuleSet};
@@ -134,7 +134,7 @@ pub fn rule_is_ignored(
     locator: &Locator,
 ) -> bool {
     let noqa_lineno = noqa_line_for.get(&lineno).unwrap_or(&lineno);
-    let line = locator.slice(Range::new(
+    let line = locator.slice(TextRange::new(
         Location::new(*noqa_lineno, 0),
         Location::new(noqa_lineno + 1, 0),
     ));
@@ -233,7 +233,7 @@ fn add_noqa_inner(
             FileExemption::None => {}
         }
 
-        let diagnostic_lineno = diagnostic.location.row();
+        let diagnostic_lineno = diagnostic.start().row();
 
         // Is the violation ignored by a `noqa` directive on the parent line?
         if let Some(parent_lineno) = diagnostic.parent.map(|location| location.row()) {
@@ -274,7 +274,7 @@ fn add_noqa_inner(
         }
 
         // The diagnostic is not ignored by any `noqa` directive; add it to the list.
-        let lineno = diagnostic.location.row() - 1;
+        let lineno = diagnostic.start().row() - 1;
         let noqa_lineno = noqa_line_for.get(&(lineno + 1)).unwrap_or(&(lineno + 1)) - 1;
         matches_by_line
             .entry(noqa_lineno)
@@ -360,11 +360,11 @@ fn push_codes<I: Display>(str: &mut String, codes: impl Iterator<Item = I>) {
 #[cfg(test)]
 mod tests {
     use nohash_hasher::IntMap;
+    use ruff_text_size::TextRange;
     use rustpython_parser::ast::Location;
 
     use ruff_diagnostics::Diagnostic;
     use ruff_python_ast::source_code::LineEnding;
-    use ruff_python_ast::types::Range;
 
     use crate::noqa::{add_noqa_inner, NOQA_LINE_REGEX};
     use crate::rules::pycodestyle::rules::AmbiguousVariableName;
@@ -404,7 +404,7 @@ mod tests {
             pyflakes::rules::UnusedVariable {
                 name: "x".to_string(),
             },
-            Range::new(Location::new(1, 0), Location::new(1, 0)),
+            TextRange::new(Location::new(1, 0), Location::new(1, 0)),
         )];
         let contents = "x = 1";
         let commented_lines = vec![1];
@@ -422,13 +422,13 @@ mod tests {
         let diagnostics = vec![
             Diagnostic::new(
                 AmbiguousVariableName("x".to_string()),
-                Range::new(Location::new(1, 0), Location::new(1, 0)),
+                TextRange::new(Location::new(1, 0), Location::new(1, 0)),
             ),
             Diagnostic::new(
                 pyflakes::rules::UnusedVariable {
                     name: "x".to_string(),
                 },
-                Range::new(Location::new(1, 0), Location::new(1, 0)),
+                TextRange::new(Location::new(1, 0), Location::new(1, 0)),
             ),
         ];
         let contents = "x = 1  # noqa: E741\n";
@@ -447,13 +447,13 @@ mod tests {
         let diagnostics = vec![
             Diagnostic::new(
                 AmbiguousVariableName("x".to_string()),
-                Range::new(Location::new(1, 0), Location::new(1, 0)),
+                TextRange::new(Location::new(1, 0), Location::new(1, 0)),
             ),
             Diagnostic::new(
                 pyflakes::rules::UnusedVariable {
                     name: "x".to_string(),
                 },
-                Range::new(Location::new(1, 0), Location::new(1, 0)),
+                TextRange::new(Location::new(1, 0), Location::new(1, 0)),
             ),
         ];
         let contents = "x = 1  # noqa";

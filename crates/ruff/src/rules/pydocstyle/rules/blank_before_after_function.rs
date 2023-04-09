@@ -1,10 +1,10 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
+use ruff_text_size::TextRange;
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::StrExt;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::{DefinitionKind, Docstring};
@@ -65,7 +65,7 @@ pub fn blank_before_after_function(checker: &mut Checker, docstring: &Docstring)
     {
         let before = checker
             .locator
-            .slice(Range::new(parent.location, docstring.expr.location));
+            .slice(TextRange::new(parent.start(), docstring.expr.start()));
 
         let blank_lines_before = before
             .universal_newlines()
@@ -78,13 +78,13 @@ pub fn blank_before_after_function(checker: &mut Checker, docstring: &Docstring)
                 NoBlankLineBeforeFunction {
                     num_lines: blank_lines_before,
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Delete the blank line before the docstring.
                 diagnostic.set_fix(Edit::deletion(
-                    Location::new(docstring.expr.location.row() - blank_lines_before, 0),
-                    Location::new(docstring.expr.location.row(), 0),
+                    Location::new(docstring.expr.start().row() - blank_lines_before, 0),
+                    Location::new(docstring.expr.start().row(), 0),
                 ));
             }
             checker.diagnostics.push(diagnostic);
@@ -98,7 +98,7 @@ pub fn blank_before_after_function(checker: &mut Checker, docstring: &Docstring)
     {
         let after = checker
             .locator
-            .slice(Range::new(docstring.expr.end(), parent.end()));
+            .slice(TextRange::new(docstring.expr.end(), parent.end()));
 
         // If the docstring is only followed by blank and commented lines, abort.
         let all_blank_after = after
@@ -132,7 +132,7 @@ pub fn blank_before_after_function(checker: &mut Checker, docstring: &Docstring)
                 NoBlankLineAfterFunction {
                     num_lines: blank_lines_after,
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Delete the blank line after the docstring.

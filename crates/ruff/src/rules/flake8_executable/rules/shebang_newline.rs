@@ -1,8 +1,8 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 use crate::rules::flake8_executable::helpers::ShebangDirective;
 
@@ -22,7 +22,7 @@ pub fn shebang_newline(lineno: usize, shebang: &ShebangDirective) -> Option<Diag
         if lineno > 1 {
             let diagnostic = Diagnostic::new(
                 ShebangNotFirstLine,
-                Range::new(
+                TextRange::new(
                     Location::new(lineno + 1, *start),
                     Location::new(lineno + 1, *end),
                 ),

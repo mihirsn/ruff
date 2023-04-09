@@ -1,12 +1,12 @@
 use anyhow::{bail, Result};
 use log::error;
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::StrExt;
 use ruff_python_ast::source_code::Locator;
-use ruff_python_ast::types::Range;
 
 /// ## What it does
 /// Checks for invalid escape sequences.
@@ -65,7 +65,7 @@ pub fn invalid_escape_sequence(
 ) -> Vec<Diagnostic> {
     let mut diagnostics = vec![];
 
-    let text = locator.slice(Range::new(start, end));
+    let text = locator.slice(TextRange::new(start, end));
 
     // Determine whether the string is single- or triple-quoted.
     let Ok(quote) = extract_quote(text) else {
@@ -111,7 +111,7 @@ pub fn invalid_escape_sequence(
                 let end_location = Location::new(location.row(), location.column() + 2);
                 let mut diagnostic = Diagnostic::new(
                     InvalidEscapeSequence(next_char),
-                    Range::new(location, end_location),
+                    TextRange::new(location, end_location),
                 );
                 if autofix {
                     diagnostic.set_fix(Edit::insertion(

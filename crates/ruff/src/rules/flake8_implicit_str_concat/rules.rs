@@ -6,7 +6,6 @@ use rustpython_parser::Tok;
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 use crate::rules::flake8_implicit_str_concat::settings::Settings;
 

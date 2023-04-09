@@ -31,7 +31,7 @@ pub fn load_before_global_declaration(checker: &mut Checker, name: &str, expr: &
             checker.diagnostics.push(Diagnostic::new(
                 LoadBeforeGlobalDeclaration {
                     name: name.to_string(),
-                    line: stmt.location.row(),
+                    line: stmt.start().row(),
                 },
                 expr.range(),
             ));

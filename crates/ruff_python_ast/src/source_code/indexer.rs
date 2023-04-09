@@ -8,6 +8,7 @@ use rustpython_parser::Tok;
 
 pub struct Indexer {
     commented_lines: Vec<usize>,
+    // FIXME rewrite to store text ranges
     continuation_lines: Vec<usize>,
 }
 

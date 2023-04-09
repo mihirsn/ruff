@@ -388,7 +388,7 @@ fn diagnostics_to_messages(
     diagnostics
         .into_iter()
         .map(|diagnostic| {
-            let lineno = diagnostic.location.row();
+            let lineno = diagnostic.start().row();
             let noqa_row = *directives.noqa_line_for.get(&lineno).unwrap_or(&lineno);
             Message::from_diagnostic(diagnostic, file.deref().clone(), noqa_row)
         })

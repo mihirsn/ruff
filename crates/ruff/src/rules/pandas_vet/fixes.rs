@@ -28,12 +28,12 @@ pub(super) fn convert_inplace_argument_to_assignment(
 ) -> Option<Fix> {
     // Add the assignment.
     let name = match_name(expr)?;
-    let insert_assignment = Edit::insertion(format!("{name} = "), expr.location);
+    let insert_assignment = Edit::insertion(format!("{name} = "), expr.start());
 
     // Remove the `inplace` argument.
     let remove_argument = remove_argument(
         locator,
-        expr.location,
+        expr.start(),
         violation_at,
         violation_end,
         args,

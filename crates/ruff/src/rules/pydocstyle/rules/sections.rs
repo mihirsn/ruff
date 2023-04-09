@@ -9,7 +9,6 @@ use ruff_diagnostics::{Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::identifier_range;
 use ruff_python_ast::newlines::NewlineWithTrailingNewline;
-use ruff_python_ast::types::Range;
 use ruff_python_ast::{cast, whitespace};
 use ruff_python_semantic::analyze::visibility::is_staticmethod;
 
@@ -359,7 +358,7 @@ fn blanks_and_section_underline(
                 DashedUnderlineAfterSection {
                     name: context.section_name.to_string(),
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Add a dashed line (of the appropriate length) under the section header.
@@ -372,7 +371,7 @@ fn blanks_and_section_underline(
                 diagnostic.set_fix(Edit::insertion(
                     content,
                     Location::new(
-                        docstring.expr.location.row() + context.original_index,
+                        docstring.expr.start().row() + context.original_index,
                         context.line.trim_end().chars().count(),
                     ),
                 ));
@@ -384,7 +383,7 @@ fn blanks_and_section_underline(
                 EmptyDocstringSection {
                     name: context.section_name.to_string(),
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             ));
         }
         return;
@@ -406,17 +405,14 @@ fn blanks_and_section_underline(
                     SectionUnderlineAfterName {
                         name: context.section_name.to_string(),
                     },
-                    Range::from(docstring.expr),
+                    docstring.expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     // Delete any blank lines between the header and the underline.
                     diagnostic.set_fix(Edit::deletion(
+                        Location::new(docstring.expr.start().row() + context.original_index + 1, 0),
                         Location::new(
-                            docstring.expr.location.row() + context.original_index + 1,
-                            0,
-                        ),
-                        Location::new(
-                            docstring.expr.location.row()
+                            docstring.expr.start().row()
                                 + context.original_index
                                 + 1
                                 + blank_lines_after_header,
@@ -444,7 +440,7 @@ fn blanks_and_section_underline(
                     SectionUnderlineMatchesSectionLength {
                         name: context.section_name.to_string(),
                     },
-                    Range::from(docstring.expr),
+                    docstring.expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     // Replace the existing underline with a line of the appropriate length.
@@ -457,14 +453,14 @@ fn blanks_and_section_underline(
                     diagnostic.set_fix(Edit::replacement(
                         content,
                         Location::new(
-                            docstring.expr.location.row()
+                            docstring.expr.start().row()
                                 + context.original_index
                                 + 1
                                 + blank_lines_after_header,
                             0,
                         ),
                         Location::new(
-                            docstring.expr.location.row()
+                            docstring.expr.start().row()
                                 + context.original_index
                                 + 1
                                 + blank_lines_after_header
@@ -488,21 +484,21 @@ fn blanks_and_section_underline(
                     SectionUnderlineNotOverIndented {
                         name: context.section_name.to_string(),
                     },
-                    Range::from(docstring.expr),
+                    docstring.expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     // Replace the existing indentation with whitespace of the appropriate length.
                     diagnostic.set_fix(Edit::replacement(
                         whitespace::clean(docstring.indentation),
                         Location::new(
-                            docstring.expr.location.row()
+                            docstring.expr.start().row()
                                 + context.original_index
                                 + 1
                                 + blank_lines_after_header,
                             0,
                         ),
                         Location::new(
-                            docstring.expr.location.row()
+                            docstring.expr.start().row()
                                 + context.original_index
                                 + 1
                                 + blank_lines_after_header,
@@ -530,7 +526,7 @@ fn blanks_and_section_underline(
                             EmptyDocstringSection {
                                 name: context.section_name.to_string(),
                             },
-                            Range::from(docstring.expr),
+                            docstring.expr.range(),
                         ));
                     }
                 } else {
@@ -543,20 +539,20 @@ fn blanks_and_section_underline(
                             BlankLinesBetweenHeaderAndContent {
                                 name: context.section_name.to_string(),
                             },
-                            Range::from(docstring.expr),
+                            docstring.expr.range(),
                         );
                         if checker.patch(diagnostic.kind.rule()) {
                             // Delete any blank lines between the header and content.
                             diagnostic.set_fix(Edit::deletion(
                                 Location::new(
-                                    docstring.expr.location.row()
+                                    docstring.expr.start().row()
                                         + context.original_index
                                         + 1
                                         + line_after_dashes_index,
                                     0,
                                 ),
                                 Location::new(
-                                    docstring.expr.location.row()
+                                    docstring.expr.start().row()
                                         + context.original_index
                                         + 1
                                         + line_after_dashes_index
@@ -575,7 +571,7 @@ fn blanks_and_section_underline(
                     EmptyDocstringSection {
                         name: context.section_name.to_string(),
                     },
-                    Range::from(docstring.expr),
+                    docstring.expr.range(),
                 ));
             }
         }
@@ -589,7 +585,7 @@ fn blanks_and_section_underline(
                 DashedUnderlineAfterSection {
                     name: context.section_name.to_string(),
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Add a dashed line (of the appropriate length) under the section header.
@@ -602,7 +598,7 @@ fn blanks_and_section_underline(
                 diagnostic.set_fix(Edit::insertion(
                     content,
                     Location::new(
-                        docstring.expr.location.row() + context.original_index,
+                        docstring.expr.start().row() + context.original_index,
                         context.line.trim_end().chars().count(),
                     ),
                 ));
@@ -619,17 +615,14 @@ fn blanks_and_section_underline(
                     BlankLinesBetweenHeaderAndContent {
                         name: context.section_name.to_string(),
                     },
-                    Range::from(docstring.expr),
+                    docstring.expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     // Delete any blank lines between the header and content.
                     diagnostic.set_fix(Edit::deletion(
+                        Location::new(docstring.expr.start().row() + context.original_index + 1, 0),
                         Location::new(
-                            docstring.expr.location.row() + context.original_index + 1,
-                            0,
-                        ),
-                        Location::new(
-                            docstring.expr.location.row()
+                            docstring.expr.start().row()
                                 + context.original_index
                                 + 1
                                 + blank_lines_after_header,
@@ -651,7 +644,7 @@ fn common_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                 CapitalizeSectionName {
                     name: context.section_name.to_string(),
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Replace the section title with the capitalized variant. This requires
@@ -663,11 +656,11 @@ fn common_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                     diagnostic.set_fix(Edit::replacement(
                         capitalized_section_name.to_string(),
                         Location::new(
-                            docstring.expr.location.row() + context.original_index,
+                            docstring.expr.start().row() + context.original_index,
                             *section_name_start,
                         ),
                         Location::new(
-                            docstring.expr.location.row() + context.original_index,
+                            docstring.expr.start().row() + context.original_index,
                             section_name_start + section_name_length,
                         ),
                     ));
@@ -684,15 +677,15 @@ fn common_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                 SectionNotOverIndented {
                     name: context.section_name.to_string(),
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Replace the existing indentation with whitespace of the appropriate length.
                 diagnostic.set_fix(Edit::replacement(
                     whitespace::clean(docstring.indentation),
-                    Location::new(docstring.expr.location.row() + context.original_index, 0),
+                    Location::new(docstring.expr.start().row() + context.original_index, 0),
                     Location::new(
-                        docstring.expr.location.row() + context.original_index,
+                        docstring.expr.start().row() + context.original_index,
                         leading_space.len(),
                     ),
                 ));
@@ -717,7 +710,7 @@ fn common_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                     BlankLineAfterLastSection {
                         name: context.section_name.to_string(),
                     },
-                    Range::from(docstring.expr),
+                    docstring.expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     // Add a newline after the section.
@@ -725,7 +718,7 @@ fn common_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                     diagnostic.set_fix(Edit::insertion(
                         format!("{}{}", line_end, docstring.indentation),
                         Location::new(
-                            docstring.expr.location.row()
+                            docstring.expr.start().row()
                                 + context.original_index
                                 + context.following_lines.len(),
                             line.trim_end().chars().count(),
@@ -744,7 +737,7 @@ fn common_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                     NoBlankLineAfterSection {
                         name: context.section_name.to_string(),
                     },
-                    Range::from(docstring.expr),
+                    docstring.expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     // Add a newline after the section.
@@ -752,7 +745,7 @@ fn common_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                     diagnostic.set_fix(Edit::insertion(
                         line_end.to_string(),
                         Location::new(
-                            docstring.expr.location.row()
+                            docstring.expr.start().row()
                                 + context.original_index
                                 + context.following_lines.len(),
                             line.trim_end().chars().count(),
@@ -774,13 +767,13 @@ fn common_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                 NoBlankLineBeforeSection {
                     name: context.section_name.to_string(),
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Add a blank line before the section.
                 diagnostic.set_fix(Edit::insertion(
                     line_end.to_string(),
-                    Location::new(docstring.expr.location.row() + context.original_index, 0),
+                    Location::new(docstring.expr.start().row() + context.original_index, 0),
                 ));
             }
             checker.diagnostics.push(diagnostic);
@@ -971,7 +964,7 @@ fn numpy_section(checker: &mut Checker, docstring: &Docstring, context: &Section
                 NewLineAfterSectionName {
                     name: context.section_name.to_string(),
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Delete the suffix. This requires locating the end of the section name.
@@ -983,11 +976,11 @@ fn numpy_section(checker: &mut Checker, docstring: &Docstring, context: &Section
                     let suffix_length = suffix.chars().count();
                     diagnostic.set_fix(Edit::deletion(
                         Location::new(
-                            docstring.expr.location.row() + context.original_index,
+                            docstring.expr.start().row() + context.original_index,
                             *suffix_start,
                         ),
                         Location::new(
-                            docstring.expr.location.row() + context.original_index,
+                            docstring.expr.start().row() + context.original_index,
                             suffix_start + suffix_length,
                         ),
                     ));
@@ -1018,7 +1011,7 @@ fn google_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                 SectionNameEndsInColon {
                     name: context.section_name.to_string(),
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Replace the suffix. This requires locating the end of the section name.
@@ -1031,11 +1024,11 @@ fn google_section(checker: &mut Checker, docstring: &Docstring, context: &Sectio
                     diagnostic.set_fix(Edit::replacement(
                         ":".to_string(),
                         Location::new(
-                            docstring.expr.location.row() + context.original_index,
+                            docstring.expr.start().row() + context.original_index,
                             *suffix_start,
                         ),
                         Location::new(
-                            docstring.expr.location.row() + context.original_index,
+                            docstring.expr.start().row() + context.original_index,
                             suffix_start + suffix_length,
                         ),
                     ));

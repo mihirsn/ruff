@@ -1,3 +1,4 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 use rustpython_parser::lexer::LexResult;
 use rustpython_parser::Tok;
@@ -5,7 +6,6 @@ use rustpython_parser::Tok;
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::source_code::Locator;
-use ruff_python_ast::types::Range;
 
 use crate::lex::docstring_detection::StateMachine;
 use crate::registry::Rule;
@@ -265,7 +265,7 @@ fn docstring(
 ) -> Option<Diagnostic> {
     let quotes_settings = &settings.flake8_quotes;
 
-    let text = locator.slice(Range::new(start, end));
+    let text = locator.slice(TextRange::new(start, end));
     let trivia: Trivia = text.into();
 
     if trivia
@@ -279,7 +279,7 @@ fn docstring(
         BadQuotesDocstring {
             quote: quotes_settings.docstring_quotes,
         },
-        Range::new(start, end),
+        TextRange::new(start, end),
     );
     if autofix.into() && settings.rules.should_fix(Rule::BadQuotesDocstring) {
         let quote_count = if trivia.is_multiline { 3 } else { 1 };
@@ -310,7 +310,7 @@ fn strings(
     let trivia = sequence
         .iter()
         .map(|(start, end)| {
-            let text = locator.slice(Range::new(*start, *end));
+            let text = locator.slice(TextRange::new(*start, *end));
             let trivia: Trivia = text.into();
             trivia
         })
@@ -353,7 +353,7 @@ fn strings(
                 BadQuotesMultilineString {
                     quote: quotes_settings.multiline_quotes,
                 },
-                Range::new(*start, *end),
+                TextRange::new(*start, *end),
             );
 
             if autofix.into() && settings.rules.should_fix(Rule::BadQuotesMultilineString) {
@@ -385,7 +385,7 @@ fn strings(
                     && !string_contents.contains(bad_single(quotes_settings.inline_quotes))
                 {
                     let mut diagnostic =
-                        Diagnostic::new(AvoidableEscapedQuote, Range::new(*start, *end));
+                        Diagnostic::new(AvoidableEscapedQuote, TextRange::new(*start, *end));
                     if autofix.into() && settings.rules.should_fix(Rule::AvoidableEscapedQuote) {
                         let quote = bad_single(quotes_settings.inline_quotes);
 
@@ -443,7 +443,7 @@ fn strings(
                     BadQuotesInlineString {
                         quote: quotes_settings.inline_quotes,
                     },
-                    Range::new(*start, *end),
+                    TextRange::new(*start, *end),
                 );
                 if autofix.into() && settings.rules.should_fix(Rule::BadQuotesInlineString) {
                     let quote = good_single(quotes_settings.inline_quotes);

@@ -1,8 +1,8 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 const BIDI_UNICODE: [char; 10] = [
     '\u{202A}', //{LEFT-TO-RIGHT EMBEDDING}
@@ -40,7 +40,7 @@ pub fn bidirectional_unicode(lineno: usize, line: &str) -> Vec<Diagnostic> {
     if line.contains(BIDI_UNICODE) {
         diagnostics.push(Diagnostic::new(
             BidirectionalUnicode,
-            Range::new(
+            TextRange::new(
                 Location::new(lineno + 1, 0),
                 Location::new((lineno + 1) + 1, 0),
             ),

@@ -1,7 +1,7 @@
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::StrExt;
-use ruff_python_ast::types::Range;
+use ruff_text_size::TextRange;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::{DefinitionKind, Docstring};
@@ -70,7 +70,7 @@ pub fn blank_before_after_class(checker: &mut Checker, docstring: &Docstring) {
     {
         let before = checker
             .locator
-            .slice(Range::new(parent.location, docstring.expr.location));
+            .slice(TextRange::new(parent.start(), docstring.expr.start()));
 
         let blank_lines_before = before
             .universal_newlines()
@@ -84,13 +84,13 @@ pub fn blank_before_after_class(checker: &mut Checker, docstring: &Docstring) {
                     BlankLineBeforeClass {
                         lines: blank_lines_before,
                     },
-                    Range::from(docstring.expr),
+                    docstring.expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     // Delete the blank line before the class.
                     diagnostic.set_fix(Edit::deletion(
-                        Location::new(docstring.expr.location.row() - blank_lines_before, 0),
-                        Location::new(docstring.expr.location.row(), 0),
+                        Location::new(docstring.expr.start().row() - blank_lines_before, 0),
+                        Location::new(docstring.expr.start().row(), 0),
                     ));
                 }
                 checker.diagnostics.push(diagnostic);
@@ -106,14 +106,14 @@ pub fn blank_before_after_class(checker: &mut Checker, docstring: &Docstring) {
                     OneBlankLineBeforeClass {
                         lines: blank_lines_before,
                     },
-                    Range::from(docstring.expr),
+                    docstring.expr.range(),
                 );
                 if checker.patch(diagnostic.kind.rule()) {
                     // Insert one blank line before the class.
                     diagnostic.set_fix(Edit::replacement(
                         checker.stylist.line_ending().to_string(),
-                        Location::new(docstring.expr.location.row() - blank_lines_before, 0),
-                        Location::new(docstring.expr.location.row(), 0),
+                        Location::new(docstring.expr.start().row() - blank_lines_before, 0),
+                        Location::new(docstring.expr.start().row(), 0),
                     ));
                 }
                 checker.diagnostics.push(diagnostic);
@@ -124,7 +124,7 @@ pub fn blank_before_after_class(checker: &mut Checker, docstring: &Docstring) {
     if checker.settings.rules.enabled(Rule::OneBlankLineAfterClass) {
         let after = checker
             .locator
-            .slice(Range::new(docstring.expr.end(), parent.end()));
+            .slice(TextRange::new(docstring.expr.end(), parent.end()));
 
         let all_blank_after = after
             .universal_newlines()
@@ -144,7 +144,7 @@ pub fn blank_before_after_class(checker: &mut Checker, docstring: &Docstring) {
                 OneBlankLineAfterClass {
                     lines: blank_lines_after,
                 },
-                Range::from(docstring.expr),
+                docstring.expr.range(),
             );
             if checker.patch(diagnostic.kind.rule()) {
                 // Insert a blank line before the class (replacing any existing lines).

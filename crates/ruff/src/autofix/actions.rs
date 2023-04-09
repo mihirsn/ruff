@@ -199,7 +199,7 @@ pub fn delete_stmt(
         } else if helpers::has_leading_content(stmt, locator) {
             Edit::deletion(stmt.start(), stmt.end())
         } else if helpers::preceded_by_continuation(stmt, indexer) {
-            if is_end_of_file(stmt, locator) && stmt.location.column() == 0 {
+            if is_end_of_file(stmt, locator) && stmt.start().column() == 0 {
                 // Special-case: a file can't end in a continuation.
                 Edit::replacement(stylist.line_ending().to_string(), stmt.start(), stmt.end())
             } else {
@@ -207,7 +207,7 @@ pub fn delete_stmt(
             }
         } else {
             Edit::deletion(
-                Location::new(stmt.location.row(), 0),
+                Location::new(stmt.start().row(), 0),
                 Location::new(stmt.end().row() + 1, 0),
             )
         })
@@ -224,7 +224,7 @@ pub fn remove_unused_imports<'a>(
     indexer: &Indexer,
     stylist: &Stylist,
 ) -> Result<Edit> {
-    let module_text = locator.slice(stmt);
+    let module_text = locator.slice(stmt.range());
     let mut tree = match_module(module_text)?;
 
     let Some(Statement::Simple(body)) = tree.body.first_mut() else {
@@ -476,7 +476,7 @@ pub fn get_or_import_symbol(
         // By adding this no-op edit, we force the `unused-imports` fix to conflict with the
         // `sys-exit-alias` fix, and thus will avoid applying both fixes in the same pass.
         let import_edit = Edit::replacement(
-            locator.slice(source).to_string(),
+            locator.slice(source.range()).to_string(),
             source.start(),
             source.end(),
         );

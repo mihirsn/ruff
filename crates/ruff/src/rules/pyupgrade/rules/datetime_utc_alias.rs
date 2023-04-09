@@ -3,7 +3,6 @@ use rustpython_parser::ast::Expr;
 use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::call_path::collect_call_path;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::registry::AsRule;
@@ -47,7 +46,7 @@ pub fn datetime_utc_alias(checker: &mut Checker, expr: &Expr) {
             if straight_import {
                 diagnostic.set_fix(Edit::replacement(
                     "datetime.UTC".to_string(),
-                    expr.location,
+                    expr.start(),
                     expr.end(),
                 ));
             }

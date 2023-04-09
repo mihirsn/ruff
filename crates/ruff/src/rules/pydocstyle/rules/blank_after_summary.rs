@@ -1,7 +1,6 @@
 use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::StrExt;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::Docstring;
@@ -59,7 +58,7 @@ pub fn blank_after_summary(checker: &mut Checker, docstring: &Docstring) {
             BlankLineAfterSummary {
                 num_lines: blanks_count,
             },
-            Range::from(docstring.expr),
+            docstring.expr.range(),
         );
         if checker.patch(diagnostic.kind.rule()) {
             if blanks_count > 1 {
@@ -76,9 +75,9 @@ pub fn blank_after_summary(checker: &mut Checker, docstring: &Docstring) {
                 // Insert one blank line after the summary (replacing any existing lines).
                 diagnostic.set_fix(Edit::replacement(
                     checker.stylist.line_ending().to_string(),
-                    Location::new(docstring.expr.location.row() + summary_line + 1, 0),
+                    Location::new(docstring.expr.start().row() + summary_line + 1, 0),
                     Location::new(
-                        docstring.expr.location.row() + summary_line + 1 + blanks_count,
+                        docstring.expr.start().row() + summary_line + 1 + blanks_count,
                         0,
                     ),
                 ));

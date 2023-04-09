@@ -6,7 +6,6 @@ use ruff_diagnostics::{Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::elif_else_range;
 use ruff_python_ast::helpers::is_const_none;
-use ruff_python_ast::types::Range;
 use ruff_python_ast::visitor::Visitor;
 use ruff_python_ast::whitespace::indentation;
 
@@ -139,11 +138,11 @@ fn unnecessary_return_none(checker: &mut Checker, stack: &Stack) {
         ) {
             continue;
         }
-        let mut diagnostic = Diagnostic::new(UnnecessaryReturnNone, Range::from(*stmt));
+        let mut diagnostic = Diagnostic::new(UnnecessaryReturnNone, stmt.range());
         if checker.patch(diagnostic.kind.rule()) {
             diagnostic.set_fix(Edit::replacement(
                 "return".to_string(),
-                stmt.location,
+                stmt.start(),
                 stmt.end(),
             ));
         }
@@ -157,11 +156,11 @@ fn implicit_return_value(checker: &mut Checker, stack: &Stack) {
         if expr.is_some() {
             continue;
         }
-        let mut diagnostic = Diagnostic::new(ImplicitReturnValue, Range::from(*stmt));
+        let mut diagnostic = Diagnostic::new(ImplicitReturnValue, stmt.range());
         if checker.patch(diagnostic.kind.rule()) {
             diagnostic.set_fix(Edit::replacement(
                 "return None".to_string(),
-                stmt.location,
+                stmt.start(),
                 stmt.end(),
             ));
         }
@@ -354,13 +353,12 @@ fn has_refs_or_assigns_within_try_or_loop(id: &str, stack: &Stack) -> bool {
     if let Some(refs) = stack.refs.get(&id) {
         for location in refs {
             for (try_location, try_end_location) in &stack.tries {
-                if try_location.row() < location.row() && location.row() <= try_end_location.row() {
+                if try_location < location && location <= try_end_location {
                     return true;
                 }
             }
             for (loop_location, loop_end_location) in &stack.loops {
-                if loop_location.row() < location.row() && location.row() <= loop_end_location.row()
-                {
+                if loop_location < location && location <= loop_end_location {
                     return true;
                 }
             }
@@ -369,13 +367,12 @@ fn has_refs_or_assigns_within_try_or_loop(id: &str, stack: &Stack) -> bool {
     if let Some(refs) = stack.assigns.get(&id) {
         for location in refs {
             for (try_location, try_end_location) in &stack.tries {
-                if try_location.row() < location.row() && location.row() <= try_end_location.row() {
+                if try_location < location && location <= try_end_location {
                     return true;
                 }
             }
             for (loop_location, loop_end_location) in &stack.loops {
-                if loop_location.row() < location.row() && location.row() <= loop_end_location.row()
-                {
+                if loop_location < location && location <= loop_end_location {
                     return true;
                 }
             }
@@ -399,7 +396,7 @@ fn unnecessary_assign(checker: &mut Checker, stack: &Stack, expr: &Expr) {
         }
 
         if has_multiple_assigns(id, stack)
-            || has_refs_before_next_assign(id, expr.location, stack)
+            || has_refs_before_next_assign(id, expr.start(), stack)
             || has_refs_or_assigns_within_try_or_loop(id, stack)
         {
             return;

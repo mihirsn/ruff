@@ -3,13 +3,14 @@ use rustc_hash::FxHashMap;
 use rustpython_parser::ast::Location;
 use rustpython_parser::lexer::LexResult;
 use rustpython_parser::Tok;
+use std::ops::Add;
 
 use crate::cst::{
     Alias, Arg, Body, BoolOp, CmpOp, Excepthandler, ExcepthandlerKind, Expr, ExprKind, Keyword,
     Operator, Pattern, PatternKind, SliceIndex, SliceIndexKind, Stmt, StmtKind, UnaryOp,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub enum Node<'a> {
     Alias(&'a Alias),
     Arg(&'a Arg),
@@ -47,7 +48,7 @@ impl Node<'_> {
         }
     }
 
-    pub const fn start(&self) -> TextSize {
+    pub fn start(&self) -> TextSize {
         match self {
             Node::Alias(node) => node.start(),
             Node::Arg(node) => node.start(),
@@ -97,9 +98,18 @@ pub enum TriviaTokenKind {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TriviaToken {
-    pub start: Location,
-    pub end: Location,
+    pub range: TextRange,
     pub kind: TriviaTokenKind,
+}
+
+impl TriviaToken {
+    pub const fn start(&self) -> TextSize {
+        self.range.start()
+    }
+
+    pub const fn end(&self) -> TextSize {
+        self.range.end()
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, is_macro::Is)]
@@ -166,11 +176,11 @@ impl Trivia {
                 relationship,
             },
             TriviaTokenKind::OwnLineComment => Self {
-                kind: TriviaKind::OwnLineComment(TextRange::new(token.start, token.end)),
+                kind: TriviaKind::OwnLineComment(token.range),
                 relationship,
             },
             TriviaTokenKind::EndOfLineComment => Self {
-                kind: TriviaKind::EndOfLineComment(TextRange::new(token.start, token.end)),
+                kind: TriviaKind::EndOfLineComment(token.range),
                 relationship,
             },
             TriviaTokenKind::Parentheses => Self {
@@ -181,32 +191,55 @@ impl Trivia {
     }
 }
 
-pub fn extract_trivia_tokens(lxr: &[LexResult]) -> Vec<TriviaToken> {
+pub fn extract_trivia_tokens(lxr: &[LexResult], text: &str) -> Vec<TriviaToken> {
     let mut tokens = vec![];
+    let mut prev_end = TextSize::default();
     let mut prev_tok: Option<(&Location, &Tok, &Location)> = None;
-    let mut prev_non_newline_tok: Option<TextRange> = None;
     let mut prev_semantic_tok: Option<(&Location, &Tok, &Location)> = None;
     let mut parens = vec![];
+
     for (start, tok, end) in lxr.iter().flatten() {
         // Add empty lines.
-        if let Some(prev_range) = prev_non_newline_tok {
-            for row in prev_range.end().row() + 1..start.row() {
+        let trivia = &text[TextRange::new(prev_end, *start)];
+        let bytes = trivia.as_bytes();
+
+        let mut bytes_iter = bytes.iter().enumerate();
+
+        let mut after_new_line = matches!(
+            prev_tok,
+            Some((_, Tok::Newline | Tok::NonLogicalNewline, _))
+        );
+
+        while let Some((index, byte)) = bytes_iter.next() {
+            let len = match byte {
+                b'\r' if bytes.get(index + 1) == Some(&b'\n') => {
+                    bytes_iter.next();
+                    TextSize::from(2)
+                }
+                b'\n' | b'\r' => TextSize::from(1),
+                _ => {
+                    // Must be whitespace or the parser would generate a token
+                    continue;
+                }
+            };
+
+            if after_new_line {
+                let new_line_start = prev_end.add(TextSize::try_from(index).unwrap());
                 tokens.push(TriviaToken {
-                    start: Location::new(row, 0),
-                    end: Location::new(row + 1, 0),
+                    range: TextRange::new(new_line_start, new_line_start.add(len)),
                     kind: TriviaTokenKind::EmptyLine,
                 });
+            } else {
+                after_new_line = true;
             }
         }
 
         // Add comments.
         if let Tok::Comment(_) = tok {
             tokens.push(TriviaToken {
-                start: *start,
-                end: *end,
-                kind: if prev_non_newline_tok
-                    .map_or(true, |(prev_range)| prev_range.start().row() < start.row())
-                {
+                range: TextRange::new(*start, *end),
+                // Used to use prev_non-newline_tok
+                kind: if after_new_line || prev_tok.is_none() {
                     TriviaTokenKind::OwnLineComment
                 } else {
                     TriviaTokenKind::EndOfLineComment
@@ -222,8 +255,7 @@ pub fn extract_trivia_tokens(lxr: &[LexResult]) -> Vec<TriviaToken> {
             if let Some((prev_start, prev_tok, prev_end)) = prev_semantic_tok {
                 if prev_tok == &Tok::Comma {
                     tokens.push(TriviaToken {
-                        start: *prev_start,
-                        end: *prev_end,
+                        range: TextRange::new(*prev_start, *prev_end),
                         kind: TriviaTokenKind::MagicTrailingComma,
                     });
                 }
@@ -249,19 +281,13 @@ pub fn extract_trivia_tokens(lxr: &[LexResult]) -> Vec<TriviaToken> {
             let (start, explicit) = parens.pop().unwrap();
             if explicit {
                 tokens.push(TriviaToken {
-                    start: *start,
-                    end: *end,
+                    range: TextRange::new(*start, *end),
                     kind: TriviaTokenKind::Parentheses,
                 });
             }
         }
 
         prev_tok = Some((start, tok, end));
-
-        // Track the most recent non-whitespace token.
-        if !matches!(tok, Tok::Newline | Tok::NonLogicalNewline) {
-            prev_non_newline_tok = Some(TextRange::new(*start, *end));
-        }
 
         // Track the most recent semantic token.
         if !matches!(
@@ -270,11 +296,13 @@ pub fn extract_trivia_tokens(lxr: &[LexResult]) -> Vec<TriviaToken> {
         ) {
             prev_semantic_tok = Some((start, tok, end));
         }
+
+        prev_end = *end;
     }
     tokens
 }
 
-fn sorted_child_nodes_inner<'a>(node: &Node<'a>, result: &mut Vec<Node<'a>>) {
+fn sorted_child_nodes_inner<'a>(node: Node<'a>, result: &mut Vec<Node<'a>>) {
     match node {
         Node::Mod(nodes) => {
             for stmt in nodes.iter() {
@@ -282,9 +310,7 @@ fn sorted_child_nodes_inner<'a>(node: &Node<'a>, result: &mut Vec<Node<'a>>) {
             }
         }
         Node::Body(body) => {
-            for stmt in &body.node {
-                result.push(Node::Stmt(stmt));
-            }
+            result.extend(body.iter().map(Node::Stmt));
         }
         Node::Stmt(stmt) => match &stmt.node {
             StmtKind::Return { value } => {
@@ -735,15 +761,16 @@ fn sorted_child_nodes_inner<'a>(node: &Node<'a>, result: &mut Vec<Node<'a>>) {
     }
 }
 
-pub fn sorted_child_nodes<'a>(node: &Node<'a>) -> Vec<Node<'a>> {
+pub fn sorted_child_nodes<'a>(node: Node<'a>) -> Vec<Node<'a>> {
     let mut result = Vec::new();
     sorted_child_nodes_inner(node, &mut result);
+
     result
 }
 
 pub fn decorate_token<'a>(
     token: &TriviaToken,
-    node: &Node<'a>,
+    node: Node<'a>,
     enclosing_node: Option<Node<'a>>,
     enclosed_node: Option<Node<'a>>,
     cache: &mut FxHashMap<usize, Vec<Node<'a>>>,
@@ -766,7 +793,7 @@ pub fn decorate_token<'a>(
 
     while left < right {
         let middle = (left + right) / 2;
-        let child = &child_nodes[middle];
+        let child = child_nodes[middle];
         let start = child.start();
         let end = child.end();
 
@@ -779,23 +806,17 @@ pub fn decorate_token<'a>(
                 enclosed_node = Some(child.clone());
             }
         } else {
-            if token.start <= start && token.end >= end {
+            if token.start() <= start && token.end() >= end {
                 enclosed_node = Some(child.clone());
             }
         }
 
         // The comment is completely contained by this child node.
-        if token.start >= start && token.end <= end {
-            return decorate_token(
-                token,
-                &child.clone(),
-                Some(child.clone()),
-                enclosed_node,
-                cache,
-            );
+        if token.start() >= start && token.end() <= end {
+            return decorate_token(token, child, Some(child), enclosed_node, cache);
         }
 
-        if end <= token.start {
+        if end <= token.start() {
             // This child node falls completely before the comment.
             // Because we will never consider this node or any nodes
             // before it again, this node must be the closest preceding
@@ -805,7 +826,7 @@ pub fn decorate_token<'a>(
             continue;
         }
 
-        if token.end <= start {
+        if token.end() <= start {
             // This child node falls completely after the comment.
             // Because we will never consider this node or any nodes after
             // it again, this node must be the closest following node we
@@ -945,7 +966,7 @@ pub fn decorate_trivia(tokens: Vec<TriviaToken>, python_ast: &[Stmt]) -> TriviaI
     let mut cache = FxHashMap::default();
     for token in &tokens {
         let (preceding_node, following_node, enclosing_node, enclosed_node) =
-            decorate_token(token, &Node::Mod(python_ast), None, None, &mut cache);
+            decorate_token(token, Node::Mod(python_ast), None, None, &mut cache);
 
         stack.push((
             preceding_node,

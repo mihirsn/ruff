@@ -21,7 +21,7 @@ pub fn annotate_imports<'a>(
                 // Find comments above.
                 let mut atop = vec![];
                 while let Some(comment) =
-                    comments_iter.next_if(|comment| comment.location.row() < import.location.row())
+                    comments_iter.next_if(|comment| comment.location.row() < import.start().row())
                 {
                     atop.push(comment);
                 }
@@ -54,7 +54,7 @@ pub fn annotate_imports<'a>(
                 // Find comments above.
                 let mut atop = vec![];
                 while let Some(comment) =
-                    comments_iter.next_if(|comment| comment.location.row() < import.location.row())
+                    comments_iter.next_if(|comment| comment.location.row() < import.start().row())
                 {
                     atop.push(comment);
                 }
@@ -67,10 +67,10 @@ pub fn annotate_imports<'a>(
                 if names.len() > 1
                     || names
                         .first()
-                        .map_or(false, |alias| alias.location.row() > import.location.row())
+                        .map_or(false, |alias| alias.start().row() > import.start().row())
                 {
                     while let Some(comment) = comments_iter
-                        .next_if(|comment| comment.location.row() == import.location.row())
+                        .next_if(|comment| comment.location.row() == import.start().row())
                     {
                         inline.push(comment);
                     }
@@ -82,7 +82,7 @@ pub fn annotate_imports<'a>(
                     // Find comments above.
                     let mut alias_atop = vec![];
                     while let Some(comment) = comments_iter
-                        .next_if(|comment| comment.location.row() < alias.location.row())
+                        .next_if(|comment| comment.location.row() < alias.start().row())
                     {
                         alias_atop.push(comment);
                     }

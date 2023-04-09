@@ -1,9 +1,9 @@
+use ruff_text_size::TextSize;
 use unicode_width::UnicodeWidthStr;
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::str::leading_quote;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::{DefinitionKind, Docstring};
@@ -69,18 +69,16 @@ pub fn capitalized(checker: &mut Checker, docstring: &Docstring) {
             first_word: first_word.to_string(),
             capitalized_word: capitalized_word.to_string(),
         },
-        Range::from(docstring.expr),
+        docstring.expr.range(),
     );
 
     if checker.patch(diagnostic.kind.rule()) {
         if let Some(pattern) = leading_quote(docstring.contents) {
             diagnostic.set_fix(Edit::replacement(
                 capitalized_word,
-                docstring.expr.location.with_col_offset(pattern.width()),
-                docstring
-                    .expr
-                    .location
-                    .with_col_offset(pattern.width() + first_word.width()),
+                docstring.expr.start() + TextSize::try_from(pattern.width()).unwrap(),
+                docstring.expr.start()
+                    + TextSize::try_from(pattern.width() + first_word.width()).unwrap(),
             ));
         }
     }

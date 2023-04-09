@@ -1,10 +1,10 @@
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{Constant, Expr, ExprKind, Keyword};
 use rustpython_parser::{lexer, Mode, Tok};
 
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::source_code::Locator;
-use ruff_python_ast::types::Range;
 
 use crate::autofix::actions::remove_argument;
 use crate::checkers::ast::Checker;
@@ -109,28 +109,28 @@ fn match_encoding_arg<'a>(args: &'a [Expr], kwargs: &'a [Keyword]) -> Option<Enc
 /// Return an [`Edit`] replacing the call to encode with a byte string.
 fn replace_with_bytes_literal(locator: &Locator, expr: &Expr, constant: &Expr) -> Edit {
     // Build up a replacement string by prefixing all string tokens with `b`.
-    let contents = locator.slice(constant);
+    let contents = locator.slice(constant.range());
     let mut replacement = String::with_capacity(contents.len() + 1);
     let mut prev = None;
-    for (start, tok, end) in lexer::lex_located(contents, Mode::Module, constant.location).flatten()
+    for (start, tok, end) in lexer::lex_located(contents, Mode::Module, constant.start()).flatten()
     {
         if matches!(tok, Tok::String { .. }) {
             if let Some(prev) = prev {
-                replacement.push_str(locator.slice(Range::new(prev, start)));
+                replacement.push_str(locator.slice(TextRange::new(prev, start)));
             }
-            let string = locator.slice(Range::new(start, end));
+            let string = locator.slice(TextRange::new(start, end));
             replacement.push_str(&format!(
                 "b{}",
                 &string.trim_start_matches('u').trim_start_matches('U')
             ));
         } else {
             if let Some(prev) = prev {
-                replacement.push_str(locator.slice(Range::new(prev, end)));
+                replacement.push_str(locator.slice(TextRange::new(prev, end)));
             }
         }
         prev = Some(end);
     }
-    Edit::replacement(replacement, expr.location, expr.end())
+    Edit::replacement(replacement, expr.start(), expr.end())
 }
 
 /// UP012
@@ -180,8 +180,8 @@ pub fn unnecessary_encode_utf8(
                         diagnostic.try_set_fix(|| {
                             remove_argument(
                                 checker.locator,
-                                func.location,
-                                kwarg.location,
+                                func.start(),
+                                kwarg.start(),
                                 kwarg.end(),
                                 args,
                                 kwargs,
@@ -202,8 +202,8 @@ pub fn unnecessary_encode_utf8(
                         diagnostic.try_set_fix(|| {
                             remove_argument(
                                 checker.locator,
-                                func.location,
-                                arg.location,
+                                func.start(),
+                                arg.start(),
                                 arg.end(),
                                 args,
                                 kwargs,
@@ -231,8 +231,8 @@ pub fn unnecessary_encode_utf8(
                         diagnostic.try_set_fix(|| {
                             remove_argument(
                                 checker.locator,
-                                func.location,
-                                kwarg.location,
+                                func.start(),
+                                kwarg.start(),
                                 kwarg.end(),
                                 args,
                                 kwargs,
@@ -253,8 +253,8 @@ pub fn unnecessary_encode_utf8(
                         diagnostic.try_set_fix(|| {
                             remove_argument(
                                 checker.locator,
-                                func.location,
-                                arg.location,
+                                func.start(),
+                                arg.start(),
                                 arg.end(),
                                 args,
                                 kwargs,

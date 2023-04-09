@@ -4,7 +4,6 @@ use rustpython_parser::lexer::LexResult;
 
 use ruff_diagnostics::{Diagnostic, Fix};
 use ruff_python_ast::source_code::{Locator, Stylist};
-use ruff_python_ast::types::Range;
 
 use crate::registry::{AsRule, Rule};
 use crate::rules::pycodestyle::rules::logical_lines::{
@@ -162,7 +161,8 @@ pub fn check_logical_lines(
 
         // Extract the indentation level.
         let Some(start_loc) = line.first_token_location() else { continue; };
-        let start_line = locator.slice(Range::new(Location::new(start_loc.row(), 0), start_loc));
+        let start_line =
+            locator.slice(TextRange::new(Location::new(start_loc.row(), 0), start_loc));
         let indent_level = expand_indent(start_line);
         let indent_size = 4;
 

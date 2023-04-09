@@ -1,6 +1,5 @@
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::Docstring;
@@ -25,7 +24,7 @@ pub fn not_empty(checker: &mut Checker, docstring: &Docstring) -> bool {
     if checker.settings.rules.enabled(Rule::EmptyDocstring) {
         checker
             .diagnostics
-            .push(Diagnostic::new(EmptyDocstring, Range::from(docstring.expr)));
+            .push(Diagnostic::new(EmptyDocstring, docstring.expr.range()));
     }
     false
 }

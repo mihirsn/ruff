@@ -1,7 +1,6 @@
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::StrExt;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::Docstring;
@@ -39,9 +38,8 @@ pub fn triple_quotes(checker: &mut Checker, docstring: &Docstring) {
             || first_line.starts_with("ur\"\"\"")
     };
     if !starts_with_triple {
-        checker.diagnostics.push(Diagnostic::new(
-            TripleSingleQuotes,
-            Range::from(docstring.expr),
-        ));
+        checker
+            .diagnostics
+            .push(Diagnostic::new(TripleSingleQuotes, docstring.expr.range()));
     }
 }

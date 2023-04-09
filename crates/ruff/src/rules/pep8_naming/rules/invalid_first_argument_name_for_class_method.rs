@@ -2,7 +2,6 @@ use rustpython_parser::ast::{Arguments, Expr};
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 use ruff_python_semantic::analyze::function_type;
 use ruff_python_semantic::scope::Scope;
 

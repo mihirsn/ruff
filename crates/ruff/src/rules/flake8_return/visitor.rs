@@ -37,7 +37,7 @@ impl<'a> ReturnVisitor<'a> {
                     .assigns
                     .entry(id)
                     .or_insert_with(Vec::new)
-                    .push(expr.location);
+                    .push(expr.start());
                 return;
             }
             ExprKind::Attribute { .. } => {
@@ -49,7 +49,7 @@ impl<'a> ReturnVisitor<'a> {
                         .refs
                         .entry(name)
                         .or_insert_with(Vec::new)
-                        .push(expr.location);
+                        .push(expr.start());
                 }
             }
             _ => {}
@@ -129,7 +129,7 @@ impl<'a> Visitor<'a> for ReturnVisitor<'a> {
                         .refs
                         .entry(id)
                         .or_insert_with(Vec::new)
-                        .push(value.location);
+                        .push(value.start());
                 }
 
                 visitor::walk_expr(self, value);
@@ -146,14 +146,14 @@ impl<'a> Visitor<'a> for ReturnVisitor<'a> {
                 }
             }
             StmtKind::For { .. } | StmtKind::AsyncFor { .. } | StmtKind::While { .. } => {
-                self.stack.loops.push((stmt.location, stmt.end()));
+                self.stack.loops.push((stmt.start(), stmt.end()));
 
                 self.parents.push(stmt);
                 visitor::walk_stmt(self, stmt);
                 self.parents.pop();
             }
             StmtKind::Try { .. } | StmtKind::TryStar { .. } => {
-                self.stack.tries.push((stmt.location, stmt.end()));
+                self.stack.tries.push((stmt.start(), stmt.end()));
 
                 self.parents.push(stmt);
                 visitor::walk_stmt(self, stmt);
@@ -177,7 +177,7 @@ impl<'a> Visitor<'a> for ReturnVisitor<'a> {
                         .refs
                         .entry(name)
                         .or_insert_with(Vec::new)
-                        .push(expr.location);
+                        .push(expr.start());
                 }
             }
             ExprKind::Name { id, .. } => {
@@ -185,7 +185,7 @@ impl<'a> Visitor<'a> for ReturnVisitor<'a> {
                     .refs
                     .entry(id)
                     .or_insert_with(Vec::new)
-                    .push(expr.location);
+                    .push(expr.start());
             }
             ExprKind::YieldFrom { .. } | ExprKind::Yield { .. } => {
                 self.stack.yields.push(expr);

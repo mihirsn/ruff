@@ -5,6 +5,7 @@ use libcst_native::{
     ParenthesizableWhitespace, ParenthesizedNode, SimpleStatementLine, SimpleWhitespace,
     SmallStatement, Statement, Suite, TrailingWhitespace, UnaryOp, UnaryOperation,
 };
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{
     Boolop, Excepthandler, ExcepthandlerKind, Expr, ExprKind, Keyword, Location, Stmt, StmtKind,
     Unaryop,
@@ -14,7 +15,6 @@ use ruff_diagnostics::{AutofixKind, Diagnostic, Edit, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::{has_comments_in, unparse_stmt};
 use ruff_python_ast::source_code::{Locator, Stylist};
-use ruff_python_ast::types::Range;
 use ruff_python_ast::visitor::Visitor;
 use ruff_python_ast::{visitor, whitespace};
 
@@ -208,7 +208,7 @@ pub fn unittest_assertion(
                     if let Ok(stmt) = unittest_assert.generate_assert(args, keywords) {
                         diagnostic.set_fix(Edit::replacement(
                             unparse_stmt(&stmt, checker.stylist),
-                            expr.location,
+                            expr.start(),
                             expr.end(),
                         ));
                     }
@@ -325,8 +325,8 @@ fn fix_composite_condition(stmt: &Stmt, locator: &Locator, stylist: &Stylist) ->
     };
 
     // Extract the module text.
-    let contents = locator.slice(Range::new(
-        Location::new(stmt.location.row(), 0),
+    let contents = locator.slice(TextRange::new(
+        Location::new(stmt.start().row(), 0),
         Location::new(stmt.end().row() + 1, 0),
     ));
 
@@ -421,7 +421,7 @@ fn fix_composite_condition(stmt: &Stmt, locator: &Locator, stylist: &Stylist) ->
 
     Ok(Edit::replacement(
         contents,
-        Location::new(stmt.location.row(), 0),
+        Location::new(stmt.start().row(), 0),
         Location::new(stmt.end().row() + 1, 0),
     ))
 }

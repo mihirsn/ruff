@@ -1,7 +1,7 @@
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::token_kind::TokenKind;
-use ruff_python_ast::types::Range;
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use super::LogicalLineTokens;
@@ -63,7 +63,7 @@ pub(crate) fn whitespace_before_parameters(
 
             let kind: WhitespaceBeforeParameters = WhitespaceBeforeParameters { bracket: kind };
 
-            let mut diagnostic = Diagnostic::new(kind, Range::new(start, end));
+            let mut diagnostic = Diagnostic::new(kind, TextRange::new(start, end));
 
             if autofix {
                 diagnostic.set_fix(Edit::deletion(start, end));

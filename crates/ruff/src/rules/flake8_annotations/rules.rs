@@ -3,7 +3,6 @@ use rustpython_parser::ast::{Constant, Expr, ExprKind, Stmt};
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::ReturnStatementVisitor;
-use ruff_python_ast::types::Range;
 use ruff_python_ast::visitor::Visitor;
 use ruff_python_ast::{cast, helpers};
 use ruff_python_semantic::analyze::visibility;

@@ -7,7 +7,6 @@ use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::{create_expr, create_stmt, unparse_stmt};
 use ruff_python_ast::source_code::Stylist;
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::registry::{AsRule, Rule};
@@ -212,7 +211,7 @@ pub fn convert_for_loop_to_any_all(checker: &mut Checker, stmt: &Stmt, sibling: 
                 );
 
                 // Don't flag if the resulting expression would exceed the maximum line length.
-                if stmt.location.column() + contents.width() > checker.settings.line_length {
+                if stmt.start().column() + contents.width() > checker.settings.line_length {
                     return;
                 }
 
@@ -225,7 +224,7 @@ pub fn convert_for_loop_to_any_all(checker: &mut Checker, stmt: &Stmt, sibling: 
                 if checker.patch(diagnostic.kind.rule()) && checker.ctx.is_builtin("any") {
                     diagnostic.set_fix(Edit::replacement(
                         contents,
-                        stmt.location,
+                        stmt.start(),
                         loop_info.terminal,
                     ));
                 }
@@ -289,7 +288,7 @@ pub fn convert_for_loop_to_any_all(checker: &mut Checker, stmt: &Stmt, sibling: 
                 );
 
                 // Don't flag if the resulting expression would exceed the maximum line length.
-                if stmt.location.column() + contents.width() > checker.settings.line_length {
+                if stmt.start().column() + contents.width() > checker.settings.line_length {
                     return;
                 }
 
@@ -302,7 +301,7 @@ pub fn convert_for_loop_to_any_all(checker: &mut Checker, stmt: &Stmt, sibling: 
                 if checker.patch(diagnostic.kind.rule()) && checker.ctx.is_builtin("all") {
                     diagnostic.set_fix(Edit::replacement(
                         contents,
-                        stmt.location,
+                        stmt.start(),
                         loop_info.terminal,
                     ));
                 }

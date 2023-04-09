@@ -1,11 +1,11 @@
 //! `NoQA` enforcement and validation.
 
 use nohash_hasher::IntMap;
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{Diagnostic, Edit};
 use ruff_python_ast::newlines::StrExt;
-use ruff_python_ast::types::Range;
 
 use crate::codes::NoqaCode;
 use crate::noqa;
@@ -68,7 +68,7 @@ pub fn check_noqa(
             FileExemption::None => {}
         }
 
-        let diagnostic_lineno = diagnostic.location.row();
+        let diagnostic_lineno = diagnostic.start().row();
 
         // Is the violation ignored by a `noqa` directive on the parent line?
         if let Some(parent_lineno) = diagnostic.parent.map(|location| location.row()) {
@@ -135,7 +135,7 @@ pub fn check_noqa(
 
                         let mut diagnostic = Diagnostic::new(
                             UnusedNOQA { codes: None },
-                            Range::new(
+                            TextRange::new(
                                 Location::new(row + 1, start_char),
                                 Location::new(row + 1, end_char),
                             ),
@@ -210,7 +210,7 @@ pub fn check_noqa(
                                         .collect(),
                                 }),
                             },
-                            Range::new(
+                            TextRange::new(
                                 Location::new(row + 1, start_char),
                                 Location::new(row + 1, end_char),
                             ),

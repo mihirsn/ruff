@@ -73,7 +73,6 @@ pub struct Literal {
 impl Format<ASTFormatContext<'_>> for Literal {
     fn fmt(&self, f: &mut Formatter<ASTFormatContext<'_>>) -> FormatResult<()> {
         let text = f.context().contents();
-        let locator = f.context().locator();
 
         f.write_element(FormatElement::StaticTextSlice {
             text,

@@ -5,7 +5,6 @@ mod locator;
 mod stylist;
 
 pub use crate::source_code::line_index::{LineIndex, OneIndexed};
-use crate::types::Range;
 pub use generator::Generator;
 pub use indexer::Indexer;
 pub use locator::Locator;
@@ -45,7 +44,7 @@ impl<'src, 'index> SourceCode<'src, 'index> {
 
     /// Computes the one indexed row and column numbers for `offset`.
     pub fn source_location(&self, offset: TextSize) -> SourceLocation {
-        self.index.source_location(offset, &self.text)
+        self.index.source_location(offset, self.text)
     }
 
     // TODO inline
@@ -60,8 +59,8 @@ impl<'src, 'index> SourceCode<'src, 'index> {
     }
 
     /// Take the source code between the given [`Range`].
-    pub fn slice<R: Into<Range>>(&self, range: R) -> &'src str {
-        &self.text[range.into().range]
+    pub fn slice<R: Into<TextRange>>(&self, range: R) -> &'src str {
+        &self.text[range.into()]
     }
 
     pub fn line_start(&self, line: OneIndexed) -> TextSize {

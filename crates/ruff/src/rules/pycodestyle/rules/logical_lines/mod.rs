@@ -1,4 +1,5 @@
 use bitflags::bitflags;
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 use rustpython_parser::lexer::LexResult;
 use std::fmt::{Debug, Formatter};
@@ -6,7 +7,6 @@ use std::iter::FusedIterator;
 
 use ruff_python_ast::source_code::Locator;
 use ruff_python_ast::token_kind::TokenKind;
-use ruff_python_ast::types::Range;
 
 pub(crate) use extraneous_whitespace::{
     extraneous_whitespace, WhitespaceAfterOpenBracket, WhitespaceBeforeCloseBracket,
@@ -224,7 +224,7 @@ impl<'a> LogicalLine<'a> {
         let last_token = self.tokens().last().unwrap();
         self.lines
             .locator
-            .slice(Range::new(token.end(), last_token.end()))
+            .slice(TextRange::new(token.end(), last_token.end()))
     }
 
     /// Returns the text before `token`
@@ -240,7 +240,7 @@ impl<'a> LogicalLine<'a> {
         let first_token = self.tokens().first().unwrap();
         self.lines
             .locator
-            .slice(Range::new(first_token.start(), token.start()))
+            .slice(TextRange::new(first_token.start(), token.start()))
     }
 
     /// Returns the whitespace *after* the `token`
@@ -344,7 +344,7 @@ impl<'a> LogicalLineTokens<'a> {
         match (self.first(), self.last()) {
             (Some(first), Some(last)) => {
                 let locator = self.lines.locator;
-                locator.slice(Range::new(first.start(), last.end()))
+                locator.slice(TextRange::new(first.start(), last.end()))
             }
             _ => "",
         }

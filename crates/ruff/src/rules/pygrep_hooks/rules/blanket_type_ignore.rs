@@ -1,10 +1,10 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::Location;
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 #[violation]
 pub struct BlanketTypeIgnore;
@@ -24,7 +24,7 @@ pub fn blanket_type_ignore(lineno: usize, line: &str) -> Option<Diagnostic> {
     BLANKET_TYPE_IGNORE_REGEX.find(line).map(|m| {
         Diagnostic::new(
             BlanketTypeIgnore,
-            Range::new(
+            TextRange::new(
                 Location::new(lineno + 1, m.start()),
                 Location::new(lineno + 1, m.end()),
             ),

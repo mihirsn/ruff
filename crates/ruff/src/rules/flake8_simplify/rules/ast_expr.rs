@@ -3,7 +3,6 @@ use rustpython_parser::ast::{Constant, Expr, ExprKind};
 use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::helpers::{create_expr, unparse_expr};
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::registry::AsRule;
@@ -94,7 +93,7 @@ pub fn use_capital_environment_variables(checker: &mut Checker, expr: &Expr) {
         });
         diagnostic.set_fix(Edit::replacement(
             unparse_expr(&new_env_var, checker.stylist),
-            arg.location,
+            arg.start(),
             arg.end(),
         ));
     }
@@ -127,7 +126,7 @@ fn check_os_environ_subscript(checker: &mut Checker, expr: &Expr) {
             expected: capital_env_var.clone(),
             original: env_var.clone(),
         },
-        Range::from(slice),
+        slice.range(),
     );
     if checker.patch(diagnostic.kind.rule()) {
         let new_env_var = create_expr(ExprKind::Constant {
@@ -136,7 +135,7 @@ fn check_os_environ_subscript(checker: &mut Checker, expr: &Expr) {
         });
         diagnostic.set_fix(Edit::replacement(
             unparse_expr(&new_env_var, checker.stylist),
-            slice.location,
+            slice.start(),
             slice.end(),
         ));
     }
@@ -181,10 +180,10 @@ pub fn dict_get_with_none_default(checker: &mut Checker, expr: &Expr) {
 
     let expected = format!(
         "{}({})",
-        checker.locator.slice(func),
-        checker.locator.slice(key)
+        checker.locator.slice(func.range()),
+        checker.locator.slice(key.range())
     );
-    let original = checker.locator.slice(expr).to_string();
+    let original = checker.locator.slice(expr.range()).to_string();
 
     let mut diagnostic = Diagnostic::new(
         DictGetWithNoneDefault {
@@ -195,11 +194,7 @@ pub fn dict_get_with_none_default(checker: &mut Checker, expr: &Expr) {
     );
 
     if checker.patch(diagnostic.kind.rule()) {
-        diagnostic.set_fix(Edit::replacement(
-            expected,
-            expr.location,
-            expr.end_location.unwrap(),
-        ));
+        diagnostic.set_fix(Edit::replacement(expected, expr.start(), expr.end()));
     }
     checker.diagnostics.push(diagnostic);
 }

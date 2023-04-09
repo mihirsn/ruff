@@ -2,7 +2,7 @@ use ruff_diagnostics::{AlwaysAutofixableViolation, Diagnostic, Edit};
 use ruff_macros::{derive_message_formats, violation};
 use ruff_python_ast::newlines::{NewlineWithTrailingNewline, StrExt};
 use ruff_python_ast::str::{is_triple_quote, leading_quote};
-use ruff_python_ast::types::Range;
+use ruff_text_size::TextRange;
 
 use crate::checkers::ast::Checker;
 use crate::docstrings::definition::{DefinitionKind, Docstring};
@@ -58,10 +58,9 @@ pub fn multi_line_summary_start(checker: &mut Checker, docstring: &Docstring) {
             .rules
             .enabled(Rule::MultiLineSummaryFirstLine)
         {
-            let mut diagnostic =
-                Diagnostic::new(MultiLineSummaryFirstLine, Range::from(docstring.expr));
+            let mut diagnostic = Diagnostic::new(MultiLineSummaryFirstLine, docstring.expr.range());
             if checker.patch(diagnostic.kind.rule()) {
-                let location = docstring.expr.location;
+                let location = docstring.expr.start();
                 let mut end_row = location.row() + 1;
                 // Delete until first non-whitespace char.
                 for line in content_lines {
@@ -84,7 +83,7 @@ pub fn multi_line_summary_start(checker: &mut Checker, docstring: &Docstring) {
             .enabled(Rule::MultiLineSummarySecondLine)
         {
             let mut diagnostic =
-                Diagnostic::new(MultiLineSummarySecondLine, Range::from(docstring.expr));
+                Diagnostic::new(MultiLineSummarySecondLine, docstring.expr.range());
             if checker.patch(diagnostic.kind.rule()) {
                 let mut indentation = String::from(docstring.indentation);
                 let mut fixable = true;
@@ -99,9 +98,9 @@ pub fn multi_line_summary_start(checker: &mut Checker, docstring: &Docstring) {
                     | DefinitionKind::NestedFunction(parent)
                     | DefinitionKind::Method(parent) = &docstring.kind
                     {
-                        let parent_indentation = checker.locator.slice(Range::new(
-                            Location::new(parent.location.row(), 0),
-                            Location::new(parent.location.row(), parent.location.column()),
+                        let parent_indentation = checker.locator.slice(TextRange::new(
+                            Location::new(parent.start().row(), 0),
+                            Location::new(parent.start().row(), parent.start().column()),
                         ));
                         if parent_indentation.chars().all(char::is_whitespace) {
                             indentation.clear();
@@ -113,7 +112,7 @@ pub fn multi_line_summary_start(checker: &mut Checker, docstring: &Docstring) {
                 }
 
                 if fixable {
-                    let location = docstring.expr.location;
+                    let location = docstring.expr.start();
                     let prefix = leading_quote(contents).unwrap();
                     // Use replacement instead of insert to trim possible whitespace between leading
                     // quote and text.

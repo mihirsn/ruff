@@ -4,7 +4,6 @@ use std::ops::Add;
 
 use itertools::Either::{Left, Right};
 use log::error;
-use ruff_text_size::TextSize;
 use rustc_hash::FxHashSet;
 use rustpython_parser::ast::{
     Boolop, Constant, Expr, ExprContext, ExprKind, Keyword, Stmt, StmtKind,
@@ -22,7 +21,6 @@ use ruff_python_stdlib::identifiers::is_identifier;
 
 use crate::autofix::actions::delete_stmt;
 use crate::checkers::ast::Checker;
-use crate::message::Location;
 use crate::registry::AsRule;
 
 use super::fixes;

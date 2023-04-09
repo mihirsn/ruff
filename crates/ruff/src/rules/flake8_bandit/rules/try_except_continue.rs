@@ -2,7 +2,6 @@ use rustpython_parser::ast::{Excepthandler, Expr, Stmt, StmtKind};
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::rules::flake8_bandit::helpers::is_untyped_exception;

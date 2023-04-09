@@ -3,18 +3,18 @@ use libcst_native::{
     Codegen, CodegenState, CompoundStatement, Expression, ParenthesizableWhitespace,
     SmallStatement, Statement, Suite,
 };
+use ruff_text_size::TextRange;
 use rustpython_parser::ast::{Expr, Location};
 use rustpython_parser::{lexer, Mode, Tok};
 
 use ruff_diagnostics::Edit;
 use ruff_python_ast::source_code::{Locator, Stylist};
-use ruff_python_ast::types::Range;
 
 use crate::cst::matchers::match_module;
 
 /// Safely adjust the indentation of the indented block at [`Range`].
 pub fn adjust_indentation(
-    range: Range,
+    range: TextRange,
     indentation: &str,
     locator: &Locator,
     stylist: &Stylist,
@@ -79,15 +79,15 @@ pub fn remove_super_arguments(locator: &Locator, stylist: &Stylist, expr: &Expr)
 
     Some(Edit::replacement(
         state.to_string(),
-        range.location,
-        range.end_location,
+        range.start(),
+        range.end(),
     ))
 }
 
 /// Remove any imports matching `members` from an import-from statement.
 pub fn remove_import_members(contents: &str, members: &[&str]) -> String {
-    let mut names: Vec<Range> = vec![];
-    let mut commas: Vec<Range> = vec![];
+    let mut names: Vec<TextRange> = vec![];
+    let mut commas: Vec<TextRange> = vec![];
     let mut removal_indices: Vec<usize> = vec![];
 
     // Find all Tok::Name tokens that are not preceded by Tok::As, and all
@@ -100,15 +100,15 @@ pub fn remove_import_members(contents: &str, members: &[&str]) -> String {
         if let Tok::Name { name } = &tok {
             if matches!(prev_tok, Some(Tok::As)) {
                 // Adjust the location to take the alias into account.
-                names.last_mut().unwrap().end_location = end;
+                names.last_mut().unwrap().end() = end;
             } else {
                 if members.contains(&name.as_str()) {
                     removal_indices.push(names.len());
                 }
-                names.push(Range::new(start, end));
+                names.push(TextRange::new(start, end));
             }
         } else if matches!(tok, Tok::Comma) {
-            commas.push(Range::new(start, end));
+            commas.push(TextRange::new(start, end));
         }
         prev_tok = Some(tok);
     }
@@ -125,16 +125,16 @@ pub fn remove_import_members(contents: &str, members: &[&str]) -> String {
         }
 
         let (start_location, end_location) = if is_first {
-            (names[index].location, names[index + 1].location)
+            (names[index].start(), names[index + 1].start())
         } else {
-            (commas[index - 1].location, names[index].end_location)
+            (commas[index - 1].location, names[index].end())
         };
 
         // Add all contents from `last_pos` to `fix.location`.
         // It's possible that `last_pos` is after `fix.location`, if we're removing the
         // first _two_ members.
         if start_location > last_pos {
-            let slice = locator.slice(Range::new(last_pos, start_location));
+            let slice = locator.slice(TextRange::new(last_pos, start_location));
             output.push_str(slice);
         }
 

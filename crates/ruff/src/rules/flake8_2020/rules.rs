@@ -3,7 +3,6 @@ use rustpython_parser::ast::{Cmpop, Constant, Expr, ExprKind, Located};
 
 use ruff_diagnostics::{Diagnostic, Violation};
 use ruff_macros::{derive_message_formats, violation};
-use ruff_python_ast::types::Range;
 
 use crate::checkers::ast::Checker;
 use crate::registry::Rule;
@@ -200,7 +199,7 @@ pub fn compare(checker: &mut Checker, left: &Expr, ops: &[Cmpop], comparators: &
                         {
                             checker
                                 .diagnostics
-                                .push(Diagnostic::new(SysVersionInfo0Eq3, Range::from(left)));
+                                .push(Diagnostic::new(SysVersionInfo0Eq3, left.range()));
                         }
                     }
                 } else if *i == BigInt::from(1) {
@@ -219,7 +218,7 @@ pub fn compare(checker: &mut Checker, left: &Expr, ops: &[Cmpop], comparators: &
                         if checker.settings.rules.enabled(Rule::SysVersionInfo1CmpInt) {
                             checker
                                 .diagnostics
-                                .push(Diagnostic::new(SysVersionInfo1CmpInt, Range::from(left)));
+                                .push(Diagnostic::new(SysVersionInfo1CmpInt, left.range()));
                         }
                     }
                 }
@@ -246,10 +245,9 @@ pub fn compare(checker: &mut Checker, left: &Expr, ops: &[Cmpop], comparators: &
                     .rules
                     .enabled(Rule::SysVersionInfoMinorCmpInt)
                 {
-                    checker.diagnostics.push(Diagnostic::new(
-                        SysVersionInfoMinorCmpInt,
-                        Range::from(left),
-                    ));
+                    checker
+                        .diagnostics
+                        .push(Diagnostic::new(SysVersionInfoMinorCmpInt, left.range()));
                 }
             }
         }
@@ -274,12 +272,12 @@ pub fn compare(checker: &mut Checker, left: &Expr, ops: &[Cmpop], comparators: &
                 if checker.settings.rules.enabled(Rule::SysVersionCmpStr10) {
                     checker
                         .diagnostics
-                        .push(Diagnostic::new(SysVersionCmpStr10, Range::from(left)));
+                        .push(Diagnostic::new(SysVersionCmpStr10, left.range()));
                 }
             } else if checker.settings.rules.enabled(Rule::SysVersionCmpStr3) {
                 checker
                     .diagnostics
-                    .push(Diagnostic::new(SysVersionCmpStr3, Range::from(left)));
+                    .push(Diagnostic::new(SysVersionCmpStr3, left.range()));
             }
         }
     }
